@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sajda App — Аналитика @sajda_app</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222536;
+    --border: #2d3148;
+    --accent: #4f8ef7;
+    --accent-ig: #e1306c;
+    --accent-tg: #5b86e5;
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #1a1d27 0%, #0f1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #4f8ef7, #22c55e); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .logo-text h1 { font-size: 18px; font-weight: 700; }
+  .logo-text p { font-size: 12px; color: var(--muted); }
+  .period { font-size: 12px; color: var(--muted); background: var(--surface2); padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; padding: 20px 32px 0; border-bottom: 1px solid var(--border); }
+  .tab { padding: 10px 24px; border-radius: var(--radius) var(--radius) 0 0; cursor: pointer; font-size: 14px; font-weight: 500; transition: all .2s; color: var(--muted); border: 1px solid transparent; border-bottom: none; }
+  .tab:hover { color: var(--text); background: var(--surface2); }
+  .tab.active { color: var(--text); background: var(--surface); border-color: var(--border); position: relative; }
+  .tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 1px; background: var(--surface); }
+  .tab-threads.active { border-top: 2px solid var(--accent-tg); }
+  .tab-ig.active { border-top: 2px solid var(--accent-ig); }
+  .tab-compare.active { border-top: 2px solid var(--green); }
+
+  /* CONTENT */
+  .content { padding: 28px 32px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* METRICS GRID */
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; position: relative; overflow: hidden; transition: transform .2s; }
+  .metric:hover { transform: translateY(-2px); }
+  .metric::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .metric.blue::before { background: var(--accent-tg); }
+  .metric.green::before { background: var(--green); }
+  .metric.yellow::before { background: var(--yellow); }
+  .metric.pink::before { background: var(--accent-ig); }
+  .metric .icon { font-size: 24px; margin-bottom: 10px; }
+  .metric .value { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; }
+  .metric .label { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .metric .sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* SECTION */
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; overflow: hidden; }
+  .section-header { padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+  .section-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+  .badge-blue { background: rgba(79,142,247,.15); color: var(--accent); }
+  .badge-green { background: rgba(34,197,94,.15); color: var(--green); }
+  .badge-red { background: rgba(239,68,68,.15); color: var(--red); }
+
+  /* FILTERS */
+  .filters { display: flex; gap: 8px; padding: 16px 24px; flex-wrap: wrap; }
+  .filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; transition: all .2s; }
+  .filter-btn:hover, .filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+  /* POSTS TABLE */
+  .posts-table { width: 100%; }
+  .post-row { display: grid; align-items: center; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s; position: relative; }
+  .threads-row { grid-template-columns: 40px 1fr 110px 100px 80px 70px 70px 90px; }
+  .ig-row { grid-template-columns: 40px 90px 90px 1fr 90px 80px 100px 80px 90px; }
+  .post-row:last-child { border-bottom: none; }
+  .post-row:hover { background: rgba(79,142,247,.06); }
+  .post-row.expanded { background: rgba(79,142,247,.08); }
+  .post-row > div { padding: 14px 16px; font-size: 13px; }
+  .post-num { color: var(--muted); font-size: 12px; text-align: center; }
+  .post-title { font-weight: 500; color: var(--text); }
+  .post-title-sub { font-size: 11px; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .post-type { display: inline-flex; align-items: center; gap: 5px; }
+  .type-badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 500; }
+  .type-text { background: rgba(91,134,229,.15); color: #8bb4f5; }
+  .type-photo { background: rgba(225,48,108,.12); color: #f08080; }
+  .type-reel { background: rgba(239,68,68,.12); color: #fc8181; }
+  .type-carousel { background: rgba(245,158,11,.12); color: #fbbf24; }
+  .type-link { background: rgba(107,114,128,.15); color: #9ca3af; }
+  .post-stat { font-weight: 600; }
+  .post-er { font-size: 13px; font-weight: 700; }
+  .er-high { color: var(--green); }
+  .er-med { color: var(--yellow); }
+  .er-low { color: var(--red); }
+  .post-arrow { color: var(--muted); font-size: 12px; transition: transform .2s; display: flex; align-items: center; justify-content: center; }
+  .post-row.expanded .post-arrow { transform: rotate(90deg); }
+
+  /* TABLE HEADER */
+  .table-header { display: grid; border-bottom: 2px solid var(--border); }
+  .table-header > div { padding: 10px 16px; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+  /* EXPANDED ROW */
+  .post-detail { display: none; background: linear-gradient(135deg, rgba(79,142,247,.05), rgba(34,197,94,.03)); border-bottom: 1px solid var(--border); padding: 20px 24px; animation: fadeIn .2s ease; }
+  .post-detail.show { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .detail-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
+  .detail-stat .val { font-size: 22px; font-weight: 700; }
+  .detail-stat .lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .detail-insights { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .insight-tag { padding: 5px 12px; border-radius: 20px; font-size: 12px; }
+  .insight-good { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.2); }
+  .insight-warn { background: rgba(245,158,11,.12); color: var(--yellow); border: 1px solid rgba(245,158,11,.2); }
+  .insight-bad { background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.2); }
+  .open-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; background: var(--accent); color: white; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; transition: opacity .2s; cursor: pointer; border: none; margin-top: 14px; }
+  .open-btn:hover { opacity: .85; }
+
+  /* CHARTS ROW */
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .chart-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  canvas { max-height: 260px; }
+
+  /* AUDIENCE */
+  .audience-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding: 20px; }
+  .aud-block { }
+  .aud-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--muted); }
+  .aud-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .aud-label { font-size: 12px; color: var(--text); min-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .aud-bar-wrap { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .aud-bar { height: 100%; border-radius: 3px; transition: width .4s; }
+  .aud-pct { font-size: 11px; color: var(--muted); min-width: 36px; text-align: right; }
+
+  /* STRATEGY */
+  .strategy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .strategy-item { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; gap: 14px; align-items: flex-start; transition: background .15s; }
+  .strategy-item:hover { background: rgba(79,142,247,.04); }
+  .strategy-item:nth-child(odd) { border-right: 1px solid var(--border); }
+  .strategy-icon { font-size: 20px; min-width: 32px; }
+  .strategy-body h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .strategy-body p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .strategy-badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 700; margin-bottom: 4px; }
+  .critical { background: rgba(239,68,68,.15); color: var(--red); }
+  .important { background: rgba(34,197,94,.12); color: var(--green); }
+  .medium { background: rgba(245,158,11,.12); color: var(--yellow); }
+
+  /* COMPARE */
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; }
+  .compare-col { }
+  .compare-col h3 { font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .compare-list { list-style: none; }
+  .compare-list li { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; align-items: flex-start; gap: 8px; }
+  .compare-list li:last-child { border-bottom: none; }
+
+  /* INFO BLOCKS */
+  .info-card { background: var(--surface2); border-radius: 10px; border: 1px solid var(--border); padding: 18px; margin: 0 20px 20px; font-size: 13px; line-height: 1.7; color: var(--muted); }
+  .info-card strong { color: var(--text); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* SORT HEADER */
+  .sortable { cursor: pointer; user-select: none; }
+  .sortable:hover { color: var(--text); }
+  .sort-icon { margin-left: 4px; }
+
+  /* SEARCH */
+  .search-wrap { padding: 0 24px 0; flex: 1; max-width: 300px; }
+  .search-input { width: 100%; padding: 8px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; outline: none; transition: border-color .2s; }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--muted); }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+  @media(max-width: 900px) {
+    .charts-row { grid-template-columns: 1fr; }
+    .audience-grid { grid-template-columns: 1fr; }
+    .strategy-grid { grid-template-columns: 1fr; }
+    .strategy-item:nth-child(odd) { border-right: none; }
+    .compare-grid { grid-template-columns: 1fr; }
+    .content { padding: 16px; }
+    .tabs { padding: 16px 16px 0; }
+    .header { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🕌</div>
+    <div class="logo-text">
+      <h1>Sajda App Analytics</h1>
+      <p>@sajda_app · Threads & Instagram</p>
+    </div>
+  </div>
+  <div class="period">📅 27 декабря 2025 — 2 апреля 2026 · 90 дней</div>
+</div>
+
+<div class="tabs">
+  <div class="tab tab-threads active" onclick="switchTab('threads')">🔵 Threads</div>
+  <div class="tab tab-ig" onclick="switchTab('instagram')">📸 Instagram</div>
+  <div class="tab tab-compare" onclick="switchTab('compare')">📊 Сравнение</div>
+</div>
+
+<!-- ==================== THREADS TAB ==================== -->
+<div class="content">
+<div id="tab-threads" class="tab-panel active">
+
+  <!-- Metrics -->
+  <div class="metrics">
+    <div class="metric blue">
+      <div class="icon">👁</div>
+      <div class="value">1 879 908</div>
+      <div class="label">Просмотры за 90 дней</div>
+    </div>
+    <div class="metric green">
+      <div class="icon">💬</div>
+      <div class="value">102 364</div>
+      <div class="label">Взаимодействия</div>
+      <div class="sub">лайки + комменты + репосты</div>
+    </div>
+    <div class="metric yellow">
+      <div class="icon">👥</div>
+      <div class="value">60 351</div>
+      <div class="label">Подписчики</div>
+    </div>
+    <div class="metric pink">
+      <div class="icon">📈</div>
+      <div class="value">5.45%</div>
+      <div class="label">ER (вовлечённость)</div>
+      <div class="sub">вовлечённость / просмотры</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-row">
+    <div class="chart-box">
+      <div class="chart-title">📊 Типы контента — средние лайки</div>
+      <canvas id="chartThreadsTypes"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">🔥 Топ-5 постов по просмотрам</div>
+      <canvas id="chartThreadsTop"></canvas>
+    </div>
+  </div>
+
+  <!-- Top 5 Posts -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">🏆 Топ-5 постов по охватам <span class="badge badge-green">ТОП</span></div>
+      <div style="color:var(--muted);font-size:12px">Нажмите на пост для деталей</div>
+    </div>
+
+    <div class="table-header threads-row">
+      <div>#</div>
+      <div>Тема поста</div>
+      <div>Тип</div>
+      <div class="sortable" onclick="sortThreads('views')">Просмотры <span class="sort-icon">↕</span></div>
+      <div class="sortable" onclick="sortThreads('likes')">Лайки <span class="sort-icon">↕</span></div>
+      <div>Комм.</div>
+      <div class="sortable" onclick="sortThreads('er')">ER <span class="sort-icon">↕</span></div>
+      <div></div>
+    </div>
+    <div id="threads-top-table"></div>
+  </div>
+
+  <!-- Last Posts -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📅 Последние посты</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="filters" style="padding:0;margin:0">
+          <button class="filter-btn active" onclick="filterThreads('all',this)">Все</button>
+          <button class="filter-btn" onclick="filterThreads('Текст',this)">Текст</button>
+          <button class="filter-btn" onclick="filterThreads('Изображение',this)">Изображение</button>
+          <button class="filter-btn" onclick="filterThreads('Карусель',this)">Карусель</button>
+          <button class="filter-btn" onclick="filterThreads('Ссылка',this)">Ссылка</button>
+        </div>
+        <input class="search-input" id="threads-search" placeholder="🔍 Поиск..." oninput="searchThreads()" style="max-width:180px">
+      </div>
+    </div>
+
+    <div class="table-header" style="grid-template-columns: 40px 90px 1fr 120px 80px 80px 80px 80px 60px;">
+      <div>#</div>
+      <div>Дата</div>
+      <div>Тема</div>
+      <div>Тип</div>
+      <div>Лайки</div>
+      <div>Комм.</div>
+      <div>Репосты</div>
+      <div>Шары</div>
+      <div></div>
+    </div>
+    <div id="threads-last-table"></div>
+  </div>
+
+  <!-- Content Analysis -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📝 Анализ контента — что работает лучше</div>
+    </div>
+
+    <div class="table-header" style="grid-template-columns: 1fr 60px 80px 80px 80px 100px 80px 1fr;">
+      <div>Тип контента</div>
+      <div>Постов</div>
+      <div>Ср. лайки</div>
+      <div>Ср. комм.</div>
+      <div>Ср. репосты</div>
+      <div>Ср. просмотры</div>
+      <div>Ср. ER</div>
+      <div>Вывод</div>
+    </div>
+    <div id="threads-content-table"></div>
+  </div>
+
+  <!-- Audience -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">👥 Аудитория — демография и география</div>
+    </div>
+    <div class="audience-grid">
+      <div class="aud-block">
+        <div class="aud-title">🌍 Топ стран</div>
+        <div id="aud-countries"></div>
+      </div>
+      <div class="aud-block">
+        <div class="aud-title">📊 Возраст</div>
+        <div id="aud-age"></div>
+      </div>
+      <div class="aud-block">
+        <div class="aud-title">⚧ Пол</div>
+        <div id="aud-gender"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Strategy -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">🚀 Стратегия продвижения Threads</div>
+    </div>
+    <div class="strategy-grid" id="threads-strategy"></div>
+  </div>
+
+  <!-- Psychology -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">🧠 Психология аудитории</div>
+    </div>
+    <div class="info-card">
+      <strong>Ядро аудитории:</strong> 25–34 года (35.9%), Казахстан (68%). Городской мусульманин/мусульманка, работающий, стремящийся укрепить веру и практику ислама. Читает контент в утренние (7–9) и вечерние (20–23) часы.<br><br>
+      <strong>Топ триггеры:</strong> Напоминание → Вина/благодарность | Рай/Наказание → Страх и надежда | Принадлежность к умме | Авторитет источника (Бухари, Муслим) | Завершённое действие (зикр)<br><br>
+      <strong>Формула вирусного поста:</strong> [Авторитетный источник] + [Цитата с личным местоимением] + [Короткая рефлексия] + [Призыв к действию] → ER 9%+
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== INSTAGRAM TAB ==================== -->
+<div id="tab-instagram" class="tab-panel">
+
+  <div class="metrics">
+    <div class="metric blue">
+      <div class="icon">📱</div>
+      <div class="value">33</div>
+      <div class="label">Постов за 90 дней</div>
+      <div class="sub">12 Reels · 10 Фото · 11 Карусели</div>
+    </div>
+    <div class="metric pink">
+      <div class="icon">❤️</div>
+      <div class="value">202 277</div>
+      <div class="label">Всего лайков</div>
+    </div>
+    <div class="metric green">
+      <div class="icon">💬</div>
+      <div class="value">1 797</div>
+      <div class="label">Всего комментариев</div>
+    </div>
+    <div class="metric yellow">
+      <div class="icon">▶️</div>
+      <div class="value">1 114 513</div>
+      <div class="label">Просмотры Reels</div>
+    </div>
+    <div class="metric blue">
+      <div class="icon">💎</div>
+      <div class="value">6 130</div>
+      <div class="label">Ср. лайков на пост</div>
+    </div>
+    <div class="metric green">
+      <div class="icon">📝</div>
+      <div class="value">54.5</div>
+      <div class="label">Ср. комм. на пост</div>
+    </div>
+  </div>
+
+  <!-- Charts IG -->
+  <div class="charts-row">
+    <div class="chart-box">
+      <div class="chart-title">📊 Типы контента — средние лайки</div>
+      <canvas id="chartIgTypes"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">🏆 Топ-10 постов по баллу</div>
+      <canvas id="chartIgTop"></canvas>
+    </div>
+  </div>
+
+  <!-- Top 10 Posts IG -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">🏆 Топ-10 постов <span class="badge badge-green">ЛУЧШИЕ</span></div>
+      <div style="color:var(--muted);font-size:12px">Нажмите на пост для деталей</div>
+    </div>
+    <div class="table-header ig-row">
+      <div>#</div>
+      <div>Дата</div>
+      <div>Тип</div>
+      <div>Подпись</div>
+      <div class="sortable" onclick="sortIg('likes','top')">Лайки <span class="sort-icon">↕</span></div>
+      <div>Комм.</div>
+      <div>Просмотры</div>
+      <div class="sortable" onclick="sortIg('score','top')">Балл <span class="sort-icon">↕</span></div>
+      <div></div>
+    </div>
+    <div id="ig-top-table"></div>
+  </div>
+
+  <!-- All 33 Posts IG -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📋 Все 33 поста <span class="badge badge-blue">ПОЛНЫЙ СПИСОК</span></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="filters" style="padding:0;margin:0">
+          <button class="filter-btn active" onclick="filterIg('all',this)">Все</button>
+          <button class="filter-btn" onclick="filterIg('Photo',this)">Фото</button>
+          <button class="filter-btn" onclick="filterIg('Reel',this)">Reel</button>
+          <button class="filter-btn" onclick="filterIg('Carousel',this)">Карусель</button>
+        </div>
+        <input class="search-input" id="ig-search" placeholder="🔍 Поиск..." oninput="searchIg()" style="max-width:180px">
+      </div>
+    </div>
+    <div class="table-header ig-row">
+      <div>#</div>
+      <div>Дата</div>
+      <div>Тип</div>
+      <div>Подпись</div>
+      <div class="sortable" onclick="sortIg('likes','all')">Лайки <span class="sort-icon">↕</span></div>
+      <div>Комм.</div>
+      <div>Просмотры</div>
+      <div class="sortable" onclick="sortIg('score','all')">Балл <span class="sort-icon">↕</span></div>
+      <div></div>
+    </div>
+    <div id="ig-all-table"></div>
+  </div>
+
+  <!-- Worst 10 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📉 Худшие 10 постов <span class="badge badge-red">ПЕРЕСМОТРЕТЬ</span></div>
+    </div>
+    <div class="table-header ig-row">
+      <div>#</div>
+      <div>Дата</div>
+      <div>Тип</div>
+      <div>Подпись</div>
+      <div>Лайки</div>
+      <div>Комм.</div>
+      <div>Просмотры</div>
+      <div>Балл</div>
+      <div></div>
+    </div>
+    <div id="ig-worst-table"></div>
+  </div>
+
+  <!-- Psychology IG -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">🧠 Психология контента Instagram</div>
+    </div>
+    <div class="strategy-grid" id="ig-insights"></div>
+  </div>
+
+</div>
+
+<!-- ==================== COMPARE TAB ==================== -->
+<div id="tab-compare" class="tab-panel">
+
+  <div class="metrics">
+    <div class="metric blue">
+      <div class="icon">🔵</div>
+      <div class="value">1 879 908</div>
+      <div class="label">Threads — просмотры</div>
+    </div>
+    <div class="metric pink">
+      <div class="icon">📸</div>
+      <div class="value">1 114 513</div>
+      <div class="label">Instagram — просмотры Reels</div>
+    </div>
+    <div class="metric green">
+      <div class="icon">🏆</div>
+      <div class="value">9 783</div>
+      <div class="label">Threads — топ-пост лайков</div>
+    </div>
+    <div class="metric yellow">
+      <div class="icon">🌟</div>
+      <div class="value">51 243</div>
+      <div class="label">Instagram — топ-пост лайков</div>
+    </div>
+  </div>
+
+  <!-- Compare chart -->
+  <div class="charts-row">
+    <div class="chart-box">
+      <div class="chart-title">📊 Сравнение ключевых метрик</div>
+      <canvas id="chartCompare"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">📈 Топ-пост каждой платформы</div>
+      <canvas id="chartTopCompare"></canvas>
+    </div>
+  </div>
+
+  <!-- Comparison table -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📊 Ключевые показатели — сравнение</div>
+    </div>
+    <div id="compare-table"></div>
+  </div>
+
+  <!-- Strengths -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">💪 Сильные стороны каждой платформы</div>
+    </div>
+    <div class="compare-grid">
+      <div class="compare-col">
+        <h3 style="color:var(--accent-tg)">🔵 Threads — в чём выигрывает</h3>
+        <ul class="compare-list" id="threads-strengths"></ul>
+      </div>
+      <div class="compare-col">
+        <h3 style="color:var(--accent-ig)">📸 Instagram — в чём выигрывает</h3>
+        <ul class="compare-list" id="ig-strengths"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Strategy -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">🗺️ Стратегия: как использовать обе платформы</div>
+    </div>
+    <div class="info-card">
+      <strong>Threads = Текстовый духовный контент</strong> (хадисы, аяты, размышления). Охват через текст, дискуссии в комментариях, формирование образа знающего источника.<br><br>
+      <strong>Instagram = Визуальный контент + Продвижение Sajda App.</strong> Reels для максимального охвата, карусели для сохранений, Stories для конверсии в скачивания.<br><br>
+      <strong>🔄 Перекрёстное продвижение:</strong> Reels на Instagram → перепостить в Threads как текстовую версию. Топовый хадис на Threads → оформить как карусель/фото на Instagram. Серия «В пятницу о Пророке ﷺ» → продублировать как Reel + текст в Threads.
+    </div>
+  </div>
+
+  <!-- Content plan -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">📅 Контент-план по дням</div>
+    </div>
+    <div id="content-plan"></div>
+  </div>
+
+  <!-- Conclusions -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">💡 Топ-5 выводов для роста</div>
+    </div>
+    <div id="conclusions"></div>
+  </div>
+
+</div>
+</div><!-- /content -->
+
+<script>
+// ===================== DATA =====================
+
+const threadsTopPosts = [
+  { num:1, title:'«Помните Меня, и Я буду помнить о вас…»', type:'Текст/цитата', views:106534, likes:9783, comments:14, er:'9.18%', erVal:9.18, weeksAgo:3, insight:'🔥 Лучший пост аккаунта. Прямая цитата Аллаха с личным обращением → ER 9.18%', tags:['er-high','top-views','top-likes'] },
+  { num:2, title:'«Айша, да будет доволен ею Аллах, спросила…»', type:'Вопрос-ответ', views:89908, likes:2880, comments:16, er:'3.20%', erVal:3.20, weeksAgo:1, insight:'Высокий охват, но низкие лайки. История сахабы — люди читают, но меньше реагируют. Тестировать форматы.', tags:['top-views','er-low'] },
+  { num:3, title:'Пророк ﷺ сказал: «Поистине, Аллах…»', type:'Хадис Пророка', views:79640, likes:6662, comments:22, er:'8.37%', erVal:8.37, weeksAgo:2, insight:'Хадис о благих делах — много репостов (5). Добавить CTA для усиления.', tags:['er-high','top-reposts'] },
+  { num:4, title:'Пророк ﷺ сказал: «Ключ к раю — это…»', type:'Хадис Пророка', views:71128, likes:6748, comments:40, er:'9.49%', erVal:9.49, weeksAgo:5, insight:'Рекордные 40 комментариев! Тема рая вызывает дискуссию. ER 9.49% — лучший ER в аккаунте.', tags:['er-high','top-comments','top-er'] },
+  { num:5, title:'Пророк ﷺ сказал: «Садака не уменьшает…»', type:'Хадис Пророка', views:58598, likes:4892, comments:3, er:'8.35%', erVal:8.35, weeksAgo:2, insight:'Хороший ER, мало комментариев. Добавить вопрос в конец для стимулирования дискуссии.', tags:['er-high'] },
+];
+
+const threadsLastPosts = [
+  { num:1, date:'27.03.2026', title:'В пятницу о Пророке ﷺ (с изображением)', type:'Изображение + текст', likes:90, comments:0, reposts:3, shares:0 },
+  { num:2, date:'27.03.2026', title:'«Посланник Аллаха ﷺ не говорил так же быстро…»', type:'Текст (хадис)', likes:333, comments:0, reposts:0, shares:0 },
+  { num:3, date:'19.03.2026', title:'«Самые любимые дела для Аллаха…» Бухари, Муслим', type:'Текст (хадис)', likes:351, comments:3, reposts:5, shares:0 },
+  { num:4, date:'19.03.2026', title:'Ссылка на статью sajda.com (2/2)', type:'Ссылка', likes:10, comments:0, reposts:0, shares:0 },
+  { num:5, date:'19.03.2026', title:'«Ид аль-Фитр (Ораза Байрам)» — карусель', type:'Карусель/слайды', likes:152, comments:4, reposts:3, shares:20 },
+];
+
+const threadsContent = [
+  { type:'Цитата из Корана (текст)', posts:1, likes:9783, comments:14, reposts:'—', views:106534, er:'9.18%', verdict:'🔥 Топ по всем метрикам' },
+  { type:'Хадис Пророка ﷺ (текст)', posts:3, likes:6094, comments:22, reposts:3, views:69789, er:'8.74%', verdict:'🔥 Лучший тип — высокий ER' },
+  { type:'Вопрос-ответ об исламе', posts:1, likes:2880, comments:16, reposts:'—', views:89908, er:'3.20%', verdict:'✅ Хороший охват, низкие лайки' },
+  { type:'Карусель / слайды', posts:1, likes:152, comments:4, reposts:3, views:'—', er:'—', verdict:'⚠️ 20 шаров — высокий virality' },
+  { type:'Изображение + текст', posts:1, likes:90, comments:0, reposts:3, views:'—', er:'—', verdict:'⚠️ Низкое вовлечение' },
+  { type:'Ссылка на сайт', posts:1, likes:10, comments:0, reposts:0, views:'—', er:'—', verdict:'❌ Алгоритм занижает посты' },
+];
+
+const igTopPosts = [
+  { num:1, date:'2026-01-08', type:'Photo', likes:51243, comments:312, views:'—', reach:'—', score:104046, caption:'Остался ровно месяц до Рамадана. Этот пост — призыв готовиться к месяцу заранее.' },
+  { num:2, date:'2026-01-18', type:'Photo', likes:21972, comments:131, views:'—', reach:'—', score:44599, caption:'Остался ровно месяц до Рамадана. С каким сердцем и какими поступками вы входите в это…' },
+  { num:3, date:'2026-03-19', type:'Reel', likes:12776, comments:319, views:483865, reach:'2.71%', score:31985, caption:'С праздником Ораза айт 🤍 Пусть Аллах примет ваш пост, намазы и дуа.' },
+  { num:4, date:'2026-02-01', type:'Reel', likes:13379, comments:114, views:229591, reach:'5.88%', score:29623, caption:'Ляйлятуль-бараат — одна из почитаемых ночей в исламе. История и значение этой ночи.' },
+  { num:5, date:'2026-02-08', type:'Carousel', likes:13552, comments:34, views:'—', reach:'—', score:27274, caption:'10 дней до Рамадана. Начните или улучшите свой намаз вместе с Sajda. Меню → Академия…' },
+  { num:6, date:'2026-01-28', type:'Photo', likes:13020, comments:60, views:'—', reach:'—', score:26340, caption:'До Рамадана осталось 20 дней. Бывает так: Рамадан уже начинается, а внутри — будто ни…' },
+  { num:7, date:'2026-01-15', type:'Reel', likes:10207, comments:135, views:110669, reach:'9.34%', score:22195, caption:'Как намаз стал обязательным для мусульман? История Аль-Исра валь-Мирадж.' },
+  { num:8, date:'2026-03-14', type:'Carousel', likes:7195, comments:30, views:'—', reach:'—', score:14540, caption:'Дуа, которое советовал Пророк ﷺ' },
+  { num:9, date:'2026-03-05', type:'Photo', likes:6520, comments:18, views:'—', reach:'—', score:13130, caption:'Зикр — это постоянная связь с Аллахом. Поминание Аллаха — одно из самых доступных пок…' },
+  { num:10, date:'2026-03-03', type:'Carousel', likes:5254, comments:45, views:'—', reach:'—', score:10733, caption:'«Воистину, намаз удерживает от мерзости и предосудительного» (Коран 29:45)' },
+];
+
+const igAllPosts = [
+  { num:1, date:'2026-04-01', type:'Carousel', likes:269, comments:10, views:'—', reach:'—', score:588, caption:'Уведомления на утренние азкары, вечерние азкары и салават доступны в последнем обновл…' },
+  { num:2, date:'2026-03-30', type:'Reel', likes:1425, comments:71, views:21805, reach:'6.86%', score:3423, caption:'Открывайте ещё больше интересных историй каждый день в Sajda App — просто потяните вв…' },
+  { num:3, date:'2026-03-27', type:'Photo', likes:1087, comments:8, views:'—', reach:'—', score:2214, caption:'В пятницу о Пророке ﷺ' },
+  { num:4, date:'2026-03-19', type:'Reel', likes:12776, comments:319, views:483865, reach:'2.71%', score:31985, caption:'С праздником Ораза айт 🤍 Пусть Аллах примет ваш пост, намазы и дуа.' },
+  { num:5, date:'2026-03-18', type:'Carousel', likes:3534, comments:23, views:'—', reach:'—', score:7183, caption:"Рамадан подошел к концу, и наступает светлый праздник 'Ид аль-Фитр (Ораза Байрам) 🌙" },
+  { num:6, date:'2026-03-16', type:'Reel', likes:956, comments:9, views:22046, reach:'4.38%', score:2177, caption:"Храбрость 'Умара. Еще больше историй в Sajda App." },
+  { num:7, date:'2026-03-14', type:'Carousel', likes:7195, comments:30, views:'—', reach:'—', score:14540, caption:'Дуа, которое советовал Пророк ﷺ' },
+  { num:8, date:'2026-03-10', type:'Carousel', likes:3660, comments:16, views:'—', reach:'—', score:7400, caption:'Начались последние 10 ночей Рамадана — самые особенные ночи этого месяца.' },
+  { num:9, date:'2026-03-05', type:'Reel', likes:1390, comments:21, views:33561, reach:'4.20%', score:3220, caption:'Новый раздел в Sajda — Академия: Вуду (омовение). Заходите в Sajda → Меню → Академия.' },
+  { num:10, date:'2026-03-05', type:'Photo', likes:6520, comments:18, views:'—', reach:'—', score:13130, caption:'Зикр — это постоянная связь с Аллахом. Поминание Аллаха — одно из самых доступных пок…' },
+  { num:11, date:'2026-03-04', type:'Photo', likes:3882, comments:24, views:'—', reach:'—', score:7884, caption:'Любовь к Корану начинается с намерения, но укрепляется через регулярность.' },
+  { num:12, date:'2026-03-03', type:'Carousel', likes:5254, comments:45, views:'—', reach:'—', score:10733, caption:'«Воистину, намаз удерживает от мерзости и предосудительного» (Коран 29:45)' },
+  { num:13, date:'2026-03-02', type:'Carousel', likes:1077, comments:24, views:'—', reach:'—', score:2274, caption:'Специальный контент для месяца Рамадан.' },
+  { num:14, date:'2026-03-02', type:'Reel', likes:3632, comments:40, views:51158, reach:'7.18%', score:7975, caption:'История о терпении и вере.' },
+  { num:15, date:'2026-03-01', type:'Carousel', likes:230, comments:3, views:'—', reach:'—', score:475, caption:'Напоминание для начала месяца.' },
+  { num:16, date:'2026-02-27', type:'Photo', likes:4392, comments:14, views:'—', reach:'—', score:8854, caption:'Пятничное напоминание о благодарности.' },
+  { num:17, date:'2026-02-21', type:'Photo', likes:2735, comments:74, views:'—', reach:'—', score:5840, caption:'Вопрос к аудитории о духовной практике.' },
+  { num:18, date:'2026-02-20', type:'Reel', likes:2075, comments:66, views:40250, reach:'5.32%', score:4882, caption:'Будильник Sajda на Рамадан 😍' },
+  { num:19, date:'2026-02-16', type:'Photo', likes:2270, comments:30, views:'—', reach:'—', score:4690, caption:'3 дня до Рамадана. Рамадан начинается не с первого сухура, а с намерения…' },
+  { num:20, date:'2026-02-08', type:'Carousel', likes:13552, comments:34, views:'—', reach:'—', score:27274, caption:'10 дней до Рамадана. Начните или улучшите свой намаз вместе с Sajda.' },
+  { num:21, date:'2026-02-04', type:'Reel', likes:2688, comments:29, views:43733, reach:'6.21%', score:5958, caption:'Совершать намаз вовремя стало чуточку легче.' },
+  { num:22, date:'2026-02-02', type:'Carousel', likes:4189, comments:40, views:'—', reach:'—', score:8578, caption:'Ляйлятуль-Бараат (Ночь Освобождения). Напомните близким об этой ночи.' },
+  { num:23, date:'2026-02-01', type:'Reel', likes:13379, comments:114, views:229591, reach:'5.88%', score:29623, caption:'Ляйлятуль-бараат — одна из почитаемых ночей в исламе. История и значение этой ночи.' },
+  { num:24, date:'2026-01-28', type:'Photo', likes:13020, comments:60, views:'—', reach:'—', score:26340, caption:'До Рамадана осталось 20 дней. Бывает так: Рамадан уже начинается, а внутри — будто ни…' },
+  { num:25, date:'2026-01-26', type:'Reel', likes:1422, comments:29, views:36331, reach:'3.99%', score:3352, caption:'Этот пингвин стал популярным — кадр из документального фильма. Мотивационное видео…' },
+  { num:26, date:'2026-01-21', type:'Reel', likes:1574, comments:20, views:24239, reach:'6.58%', score:3490, caption:'500 лет поклонения…' },
+  { num:27, date:'2026-01-18', type:'Photo', likes:21972, comments:131, views:'—', reach:'—', score:44599, caption:'Остался ровно месяц до Рамадана. С каким сердцем и какими поступками вы входите в это…' },
+  { num:28, date:'2026-01-15', type:'Reel', likes:10207, comments:135, views:110669, reach:'9.34%', score:22195, caption:'Как намаз стал обязательным для мусульман? История Аль-Исра валь-Мирадж.' },
+  { num:29, date:'2026-01-13', type:'Carousel', likes:1835, comments:19, views:'—', reach:'—', score:3765, caption:"Ночь Аль-Исра валь-Ми'радж — с 15 на 16 января. Путешествие Пророка ﷺ." },
+  { num:30, date:'2026-01-12', type:'Reel', likes:1309, comments:10, views:17265, reach:'7.64%', score:2840, caption:'Сон о Пророке ﷺ до его рождения. Духовная история.' },
+  { num:31, date:'2026-01-09', type:'Carousel', likes:249, comments:6, views:'—', reach:'—', score:528, caption:'Еженедельный дайджест контента.' },
+  { num:32, date:'2026-01-09', type:'Photo', likes:1279, comments:13, views:'—', reach:'—', score:2623, caption:'Утреннее напоминание о благодарности Аллаху.' },
+  { num:33, date:'2026-01-08', type:'Photo', likes:51243, comments:312, views:'—', reach:'—', score:104046, caption:'Остался ровно месяц до Рамадана. Этот пост — призыв готовиться к месяцу заранее.' },
+];
+
+const igWorstPosts = [
+  { num:1, date:'2026-03-01', type:'Carousel', likes:230, comments:3, views:'—', reach:'—', score:475, caption:'Напоминание для начала месяца.' },
+  { num:2, date:'2026-01-09', type:'Carousel', likes:249, comments:6, views:'—', reach:'—', score:528, caption:'Еженедельный дайджест контента.' },
+  { num:3, date:'2026-04-01', type:'Carousel', likes:269, comments:10, views:'—', reach:'—', score:588, caption:'Уведомления на утренние азкары, вечерние азкары и салават доступны в последнем обновл…' },
+  { num:4, date:'2026-03-16', type:'Reel', likes:956, comments:9, views:22046, reach:'4.38%', score:2177, caption:"Храбрость 'Умара. Еще больше историй в Sajda App." },
+  { num:5, date:'2026-03-27', type:'Photo', likes:1087, comments:8, views:'—', reach:'—', score:2214, caption:'В пятницу о Пророке ﷺ' },
+  { num:6, date:'2026-03-02', type:'Carousel', likes:1077, comments:24, views:'—', reach:'—', score:2274, caption:'Специальный контент для месяца Рамадан.' },
+  { num:7, date:'2026-01-09', type:'Photo', likes:1279, comments:13, views:'—', reach:'—', score:2623, caption:'Утреннее напоминание о благодарности Аллаху.' },
+  { num:8, date:'2026-01-12', type:'Reel', likes:1309, comments:10, views:17265, reach:'7.64%', score:2840, caption:'Сон о Пророке ﷺ до его рождения. Духовная история.' },
+  { num:9, date:'2026-03-05', type:'Reel', likes:1390, comments:21, views:33561, reach:'4.20%', score:3220, caption:'Новый раздел в Sajda — Академия: Вуду (омовение).' },
+  { num:10, date:'2026-01-26', type:'Reel', likes:1422, comments:29, views:36331, reach:'3.99%', score:3352, caption:'Этот пингвин стал популярным — кадр из документального фильма.' },
+];
+
+// ===================== HELPERS =====================
+
+function formatNum(n) {
+  if (typeof n !== 'number') return n;
+  return n.toLocaleString('ru');
+}
+
+function getTypeClass(type) {
+  if (!type) return 'type-text';
+  const t = type.toLowerCase();
+  if (t.includes('reel') || t.includes('видео')) return 'type-reel';
+  if (t.includes('photo') || t.includes('фото') || t.includes('изображени')) return 'type-photo';
+  if (t.includes('carousel') || t.includes('карусель') || t.includes('слайд')) return 'type-carousel';
+  if (t.includes('ссылка') || t.includes('link')) return 'type-link';
+  return 'type-text';
+}
+
+function getTypeLabel(type) {
+  if (!type) return 'Текст';
+  const t = type.toLowerCase();
+  if (t.includes('reel')) return '🎬 Reel';
+  if (t.includes('photo') || t.includes('фото')) return '🖼️ Фото';
+  if (t.includes('carousel') || t.includes('карусель')) return '🎠 Карусель';
+  if (t.includes('ссылка')) return '🔗 Ссылка';
+  if (t.includes('изображени')) return '🖼️ Изображение';
+  if (t.includes('вопрос')) return '❓ Вопрос-ответ';
+  if (t.includes('хадис') || t.includes('текст')) return '📝 Хадис';
+  return '📝 ' + type;
+}
+
+function erClass(er) {
+  const v = parseFloat(er);
+  if (v >= 8) return 'er-high';
+  if (v >= 3) return 'er-med';
+  return 'er-low';
+}
+
+function getInsight(post) {
+  const likes = post.likes || 0;
+  const score = post.score || 0;
+  const insights = [];
+  if (likes > 20000) insights.push({cls:'insight-good', txt:'🔥 Вирусный пост'});
+  else if (likes > 5000) insights.push({cls:'insight-good', txt:'✅ Высокие лайки'});
+  else if (likes < 1000) insights.push({cls:'insight-bad', txt:'⚠️ Низкая вовлечённость'});
+  if (post.comments > 100) insights.push({cls:'insight-good', txt:'💬 Топ по комментариям'});
+  if (post.views && post.views !== '—' && post.views > 100000) insights.push({cls:'insight-good', txt:'👁 100k+ просмотров'});
+  if (post.type === 'Reel') insights.push({cls:'insight-good', txt:'🎬 Reel — высокий охват'});
+  if (post.type === 'Carousel') insights.push({cls:'insight-good', txt:'🎠 Карусель — сохранения'});
+  return insights;
+}
+
+// ===================== RENDER THREADS TOP =====================
+
+let threadsTopSort = {field:null, dir:1};
+let threadsTopData = [...threadsTopPosts];
+
+function renderThreadsTop() {
+  const el = document.getElementById('threads-top-table');
+  el.innerHTML = '';
+  threadsTopData.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'post-row threads-row';
+    row.innerHTML = `
+      <div class="post-num">${p.num}</div>
+      <div>
+        <div class="post-title">${p.title}</div>
+        <div class="post-title-sub">${p.weeksAgo} нед. назад</div>
+      </div>
+      <div><span class="type-badge ${getTypeClass(p.type)}">${getTypeLabel(p.type)}</span></div>
+      <div class="post-stat">${formatNum(p.views)}</div>
+      <div class="post-stat">${formatNum(p.likes)}</div>
+      <div>${p.comments}</div>
+      <div class="post-er ${erClass(p.erVal)}">${p.er}</div>
+      <div class="post-arrow">›</div>
+    `;
+    const detail = document.createElement('div');
+    detail.className = 'post-detail';
+    detail.innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-stat"><div class="val" style="color:#5b86e5">${formatNum(p.views)}</div><div class="lbl">👁 Просмотры</div></div>
+        <div class="detail-stat"><div class="val" style="color:#f59e0b">${formatNum(p.likes)}</div><div class="lbl">❤️ Лайки</div></div>
+        <div class="detail-stat"><div class="val">${p.comments}</div><div class="lbl">💬 Комментарии</div></div>
+        <div class="detail-stat"><div class="val" style="color:${p.erVal >= 8 ? '#22c55e' : p.erVal >= 3 ? '#f59e0b' : '#ef4444'}">${p.er}</div><div class="lbl">📈 ER</div></div>
+      </div>
+      <div><strong style="font-size:13px">📝 Инсайт:</strong> <span style="color:var(--muted);font-size:13px">${p.insight}</span></div>
+      <div class="detail-insights">
+        ${p.tags.map(t => t === 'er-high' ? '<span class="insight-tag insight-good">🟢 ER Высокий</span>' : t === 'top-views' ? '<span class="insight-tag insight-good">👁 Топ просмотры</span>' : t === 'top-likes' ? '<span class="insight-tag insight-good">❤️ Топ лайки</span>' : t === 'top-comments' ? '<span class="insight-tag insight-good">💬 Топ комменты</span>' : t === 'top-er' ? '<span class="insight-tag insight-good">🏆 Лучший ER</span>' : t === 'top-reposts' ? '<span class="insight-tag insight-good">🔁 Топ репосты</span>' : `<span class="insight-tag insight-warn">${t}</span>`).join('')}
+      </div>
+      <button class="open-btn" onclick="alert('Откройте Threads @sajda_app чтобы найти этот пост')">→ Открыть в Threads</button>
+    `;
+    row.addEventListener('click', () => {
+      const open = !detail.classList.contains('show');
+      document.querySelectorAll('#threads-top-table .post-detail').forEach(d => d.classList.remove('show'));
+      document.querySelectorAll('#threads-top-table .post-row').forEach(r => r.classList.remove('expanded'));
+      if (open) { detail.classList.add('show'); row.classList.add('expanded'); }
+    });
+    el.appendChild(row);
+    el.appendChild(detail);
+  });
+}
+
+function sortThreads(field) {
+  if (threadsTopSort.field === field) threadsTopSort.dir *= -1;
+  else { threadsTopSort.field = field; threadsTopSort.dir = -1; }
+  const key = field === 'views' ? 'views' : field === 'likes' ? 'likes' : 'erVal';
+  threadsTopData.sort((a,b) => threadsTopSort.dir * (b[key] - a[key]));
+  renderThreadsTop();
+}
+
+// ===================== RENDER THREADS LAST =====================
+
+let threadsLastFilter = 'all';
+let threadsLastSearch = '';
+
+function filterThreads(f, btn) {
+  threadsLastFilter = f;
+  document.querySelectorAll('#tab-threads .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderThreadsLast();
+}
+
+function searchThreads() {
+  threadsLastSearch = document.getElementById('threads-search').value.toLowerCase();
+  renderThreadsLast();
+}
+
+function renderThreadsLast() {
+  const el = document.getElementById('threads-last-table');
+  el.innerHTML = '';
+  let data = threadsLastPosts;
+  if (threadsLastFilter !== 'all') data = data.filter(p => p.type.toLowerCase().includes(threadsLastFilter.toLowerCase()));
+  if (threadsLastSearch) data = data.filter(p => p.title.toLowerCase().includes(threadsLastSearch) || p.type.toLowerCase().includes(threadsLastSearch));
+  if (!data.length) { el.innerHTML = '<div class="empty">Ничего не найдено</div>'; return; }
+  data.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'post-row';
+    row.style.gridTemplateColumns = '40px 90px 1fr 120px 80px 80px 80px 80px 60px';
+    row.innerHTML = `
+      <div class="post-num">${p.num}</div>
+      <div style="font-size:12px;color:var(--muted)">${p.date}</div>
+      <div class="post-title">${p.title}</div>
+      <div><span class="type-badge ${getTypeClass(p.type)}">${getTypeLabel(p.type)}</span></div>
+      <div class="post-stat">${formatNum(p.likes)}</div>
+      <div>${p.comments}</div>
+      <div>${p.reposts}</div>
+      <div style="${p.shares > 10 ? 'color:var(--green);font-weight:700' : ''}">${p.shares}${p.shares > 10 ? ' 🔥' : ''}</div>
+      <div class="post-arrow">›</div>
+    `;
+    const detail = document.createElement('div');
+    detail.className = 'post-detail';
+    const isBad = p.type.includes('Ссылка');
+    const isViral = p.shares > 10;
+    detail.innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-stat"><div class="val" style="color:#f59e0b">${formatNum(p.likes)}</div><div class="lbl">❤️ Лайки</div></div>
+        <div class="detail-stat"><div class="val">${p.comments}</div><div class="lbl">💬 Комментарии</div></div>
+        <div class="detail-stat"><div class="val">${p.reposts}</div><div class="lbl">🔁 Репосты</div></div>
+        <div class="detail-stat"><div class="val" style="${p.shares > 10 ? 'color:var(--green)' : ''}">${p.shares}</div><div class="lbl">📤 Шары</div></div>
+      </div>
+      <div class="detail-insights">
+        ${isBad ? '<span class="insight-tag insight-bad">❌ Ссылки снижают охват алгоритмом</span>' : ''}
+        ${isViral ? '<span class="insight-tag insight-good">🔥 Высокий virality — 20 шаров!</span>' : ''}
+        ${p.likes > 300 ? '<span class="insight-tag insight-good">✅ Хорошая вовлечённость</span>' : ''}
+        ${p.type.includes('Карусель') ? '<span class="insight-tag insight-good">🎠 Карусели репостят</span>' : ''}
+      </div>
+      <button class="open-btn" onclick="alert('Откройте Threads @sajda_app для просмотра поста')">→ Открыть в Threads</button>
+    `;
+    row.addEventListener('click', () => {
+      const open = !detail.classList.contains('show');
+      document.querySelectorAll('#threads-last-table .post-detail').forEach(d => d.classList.remove('show'));
+      document.querySelectorAll('#threads-last-table .post-row').forEach(r => r.classList.remove('expanded'));
+      if (open) { detail.classList.add('show'); row.classList.add('expanded'); }
+    });
+    el.appendChild(row);
+    el.appendChild(detail);
+  });
+}
+
+// ===================== RENDER THREADS CONTENT ANALYSIS =====================
+
+function renderThreadsContent() {
+  const el = document.getElementById('threads-content-table');
+  el.innerHTML = '';
+  threadsContent.forEach(c => {
+    const row = document.createElement('div');
+    row.style.display = 'grid';
+    row.style.gridTemplateColumns = '1fr 60px 80px 80px 80px 100px 80px 1fr';
+    row.style.borderBottom = '1px solid var(--border)';
+    const isGood = c.verdict.includes('🔥');
+    const isMed = c.verdict.includes('✅') || c.verdict.includes('⚠️');
+    row.innerHTML = `
+      <div style="padding:14px 16px;font-size:13px;font-weight:500">${c.type}</div>
+      <div style="padding:14px 16px;font-size:13px;text-align:center">${c.posts}</div>
+      <div style="padding:14px 16px;font-size:13px;font-weight:600;color:${isGood ? 'var(--green)' : isMed ? 'var(--yellow)' : 'var(--muted)'}">${formatNum(c.likes)}</div>
+      <div style="padding:14px 16px;font-size:13px">${c.comments}</div>
+      <div style="padding:14px 16px;font-size:13px">${c.reposts}</div>
+      <div style="padding:14px 16px;font-size:13px">${typeof c.views === 'number' ? formatNum(c.views) : c.views}</div>
+      <div style="padding:14px 16px;font-size:13px;font-weight:700;color:${isGood ? 'var(--green)' : 'var(--muted)'}">${c.er}</div>
+      <div style="padding:14px 16px;font-size:12px">${c.verdict}</div>
+    `;
+    el.appendChild(row);
+  });
+}
+
+// ===================== RENDER IG TABLES =====================
+
+function renderIgTable(containerId, data) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  data.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'post-row ig-row';
+    row.innerHTML = `
+      <div class="post-num">${p.num}</div>
+      <div style="font-size:12px;color:var(--muted)">${p.date}</div>
+      <div><span class="type-badge ${getTypeClass(p.type)}">${getTypeLabel(p.type)}</span></div>
+      <div class="post-title" style="font-size:12px">${p.caption}</div>
+      <div class="post-stat" style="color:${p.likes > 10000 ? 'var(--green)' : p.likes < 1000 ? 'var(--red)' : 'var(--text)'}">${formatNum(p.likes)}</div>
+      <div>${p.comments}</div>
+      <div style="font-size:12px;color:var(--muted)">${typeof p.views === 'number' ? formatNum(p.views) : p.views}</div>
+      <div class="post-stat">${formatNum(p.score)}</div>
+      <div class="post-arrow">›</div>
+    `;
+    const insights = getInsight(p);
+    const detail = document.createElement('div');
+    detail.className = 'post-detail';
+    detail.innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-stat"><div class="val" style="color:#f59e0b">${formatNum(p.likes)}</div><div class="lbl">❤️ Лайки</div></div>
+        <div class="detail-stat"><div class="val">${p.comments}</div><div class="lbl">💬 Комментарии</div></div>
+        <div class="detail-stat"><div class="val">${typeof p.views === 'number' ? formatNum(p.views) : p.views}</div><div class="lbl">👁 Просмотры</div></div>
+        <div class="detail-stat"><div class="val" style="color:var(--accent)">${formatNum(p.score)}</div><div class="lbl">⭐ Балл</div></div>
+        ${p.reach && p.reach !== '—' ? `<div class="detail-stat"><div class="val">${p.reach}</div><div class="lbl">📡 Охват %</div></div>` : ''}
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px"><strong style="color:var(--text)">📝 Подпись:</strong> ${p.caption}</div>
+      <div class="detail-insights">
+        ${insights.map(i => `<span class="insight-tag ${i.cls}">${i.txt}</span>`).join('')}
+        ${p.reach && p.reach !== '—' ? `<span class="insight-tag insight-good">📡 Охват ${p.reach}</span>` : ''}
+      </div>
+      <button class="open-btn" onclick="alert('Откройте Instagram @sajda_app для просмотра поста от ${p.date}')">→ Открыть в Instagram</button>
+    `;
+    row.addEventListener('click', () => {
+      const open = !detail.classList.contains('show');
+      document.querySelectorAll(`#${containerId} .post-detail`).forEach(d => d.classList.remove('show'));
+      document.querySelectorAll(`#${containerId} .post-row`).forEach(r => r.classList.remove('expanded'));
+      if (open) { detail.classList.add('show'); row.classList.add('expanded'); }
+    });
+    el.appendChild(row);
+    el.appendChild(detail);
+  });
+}
+
+// IG filters/sort/search
+let igAllFilter = 'all';
+let igAllSearch = '';
+let igAllSortField = null, igAllSortDir = -1;
+let igTopSortField = null, igTopSortDir = -1;
+
+function filterIg(f, btn) {
+  igAllFilter = f;
+  document.querySelectorAll('#tab-instagram .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderIgAll();
+}
+function searchIg() {
+  igAllSearch = document.getElementById('ig-search').value.toLowerCase();
+  renderIgAll();
+}
+function renderIgAll() {
+  let data = [...igAllPosts];
+  if (igAllFilter !== 'all') data = data.filter(p => p.type === igAllFilter);
+  if (igAllSearch) data = data.filter(p => p.caption.toLowerCase().includes(igAllSearch) || p.type.toLowerCase().includes(igAllSearch));
+  if (igAllSortField) {
+    data.sort((a,b) => igAllSortDir * (b[igAllSortField] - a[igAllSortField]));
+  }
+  const el = document.getElementById('ig-all-table');
+  el.innerHTML = '';
+  if (!data.length) { el.innerHTML = '<div class="empty">Ничего не найдено</div>'; return; }
+  data.forEach((p, idx) => {
+    const row = document.createElement('div');
+    row.className = 'post-row ig-row';
+    row.innerHTML = `
+      <div class="post-num">${idx+1}</div>
+      <div style="font-size:12px;color:var(--muted)">${p.date}</div>
+      <div><span class="type-badge ${getTypeClass(p.type)}">${getTypeLabel(p.type)}</span></div>
+      <div class="post-title" style="font-size:12px">${p.caption}</div>
+      <div class="post-stat" style="color:${p.likes > 10000 ? 'var(--green)' : p.likes < 1000 ? 'var(--red)' : 'var(--text)'}">${formatNum(p.likes)}</div>
+      <div>${p.comments}</div>
+      <div style="font-size:12px;color:var(--muted)">${typeof p.views === 'number' ? formatNum(p.views) : p.views}</div>
+      <div class="post-stat">${formatNum(p.score)}</div>
+      <div class="post-arrow">›</div>
+    `;
+    const insights = getInsight(p);
+    const detail = document.createElement('div');
+    detail.className = 'post-detail';
+    detail.innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-stat"><div class="val" style="color:#f59e0b">${formatNum(p.likes)}</div><div class="lbl">❤️ Лайки</div></div>
+        <div class="detail-stat"><div class="val">${p.comments}</div><div class="lbl">💬 Комментарии</div></div>
+        <div class="detail-stat"><div class="val">${typeof p.views === 'number' ? formatNum(p.views) : p.views}</div><div class="lbl">👁 Просмотры</div></div>
+        <div class="detail-stat"><div class="val" style="color:var(--accent)">${formatNum(p.score)}</div><div class="lbl">⭐ Балл</div></div>
+        ${p.reach && p.reach !== '—' ? `<div class="detail-stat"><div class="val">${p.reach}</div><div class="lbl">📡 Охват %</div></div>` : ''}
+      </div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px"><strong style="color:var(--text)">📝 Подпись:</strong> ${p.caption}</div>
+      <div class="detail-insights">
+        ${insights.map(i => `<span class="insight-tag ${i.cls}">${i.txt}</span>`).join('')}
+        ${p.reach && p.reach !== '—' ? `<span class="insight-tag insight-good">📡 Охват ${p.reach}</span>` : ''}
+      </div>
+      <button class="open-btn" onclick="alert('Откройте Instagram @sajda_app для просмотра поста от ${p.date}')">→ Открыть в Instagram</button>
+    `;
+    row.addEventListener('click', () => {
+      const open = !detail.classList.contains('show');
+      document.querySelectorAll('#ig-all-table .post-detail').forEach(d => d.classList.remove('show'));
+      document.querySelectorAll('#ig-all-table .post-row').forEach(r => r.classList.remove('expanded'));
+      if (open) { detail.classList.add('show'); row.classList.add('expanded'); }
+    });
+    el.appendChild(row);
+    el.appendChild(detail);
+  });
+}
+
+function sortIg(field, which) {
+  if (which === 'top') {
+    if (igTopSortField === field) igTopSortDir *= -1; else { igTopSortField = field; igTopSortDir = -1; }
+    const sorted = [...igTopPosts].sort((a,b) => igTopSortDir * (b[field] - a[field]));
+    const el = document.getElementById('ig-top-table');
+    el.innerHTML = '';
+    sorted.forEach((p, idx) => { /* re-render with new sort */ });
+    renderIgTable('ig-top-table', sorted);
+  } else {
+    if (igAllSortField === field) igAllSortDir *= -1; else { igAllSortField = field; igAllSortDir = -1; }
+    renderIgAll();
+  }
+}
+
+// ===================== AUDIENCE =====================
+
+function renderAudience() {
+  const countries = [
+    { flag:'🇰🇿', name:'Казахстан', pct:68.1, color:'#5b86e5' },
+    { flag:'🇷🇺', name:'Россия', pct:8.4, color:'#4f8ef7' },
+    { flag:'🇰🇬', name:'Кыргызстан', pct:7.8, color:'#22c55e' },
+    { flag:'🇺🇿', name:'Узбекистан', pct:5.1, color:'#f59e0b' },
+    { flag:'🇹🇯', name:'Таджикистан', pct:1.6, color:'#8892a4' },
+  ];
+  const ages = [
+    { label:'13–17', pct:5.1, color:'#8892a4' },
+    { label:'18–24', pct:29.5, color:'#5b86e5' },
+    { label:'25–34', pct:35.9, color:'#22c55e' },
+    { label:'35–44', pct:18.8, color:'#f59e0b' },
+    { label:'45–54', pct:6.9, color:'#8892a4' },
+  ];
+  const genders = [
+    { label:'Женский', pct:38.3, color:'#e1306c' },
+    { label:'Мужской', pct:33.7, color:'#5b86e5' },
+    { label:'Не указан', pct:28.0, color:'#8892a4' },
+  ];
+
+  function renderBars(id, items) {
+    const el = document.getElementById(id);
+    el.innerHTML = items.map(item => `
+      <div class="aud-bar-row">
+        <div class="aud-label">${item.flag || ''} ${item.label || item.name}</div>
+        <div class="aud-bar-wrap"><div class="aud-bar" style="width:${item.pct}%;background:${item.color}"></div></div>
+        <div class="aud-pct">${item.pct}%</div>
+      </div>
+    `).join('');
+  }
+
+  renderBars('aud-countries', countries);
+  renderBars('aud-age', ages);
+  renderBars('aud-gender', genders);
+}
+
+// ===================== STRATEGY =====================
+
+function renderStrategy() {
+  const strategies = [
+    { priority:'critical', icon:'📖', title:'Аяты Корана с личным обращением', desc:'Пост «Помните Меня» — ER 9.18%, лучший в аккаунте. Делать 3-4 раза/нед.', freq:'3-4 раза/нед', effect:'+30-50% лайков' },
+    { priority:'critical', icon:'🚫', title:'НЕ постить ссылки в тексте', desc:'Пост со ссылкой: 10 лайков vs 300+ у текстовых. Алгоритм продвигает текст в 10×.', freq:'Никогда', effect:'Охват ×10' },
+    { priority:'important', icon:'❓', title:'Вопрос в конце каждого поста', desc:'Пост с 40 комментами (Ключ к раю) — вопрос вызывает дискуссию. +40-100% комментариев.', freq:'В каждый пост', effect:'+40-100% комм.' },
+    { priority:'important', icon:'🕌', title:'Серия «В пятницу о Пророке ﷺ»', desc:'333 лайка только на текст — серия работает. Рост лояльной аудитории.', freq:'Каждую пятницу', effect:'Лояльная аудитория' },
+    { priority:'important', icon:'🎠', title:'Карусели на праздники', desc:'20 шаров у поста об Ид — карусели репостят. +200% virality.', freq:'Каждый праздник', effect:'+200% virality' },
+    { priority:'medium', icon:'🔄', title:'Тестировать формат вопрос-ответ', desc:'Айша пост: 89k охват, но низкие лайки — аудитория читает. Тестировать форматы.', freq:'1-2 раза/нед', effect:'Понять аудиторию' },
+  ];
+
+  const el = document.getElementById('threads-strategy');
+  el.innerHTML = strategies.map(s => `
+    <div class="strategy-item">
+      <div class="strategy-icon">${s.icon}</div>
+      <div class="strategy-body">
+        <span class="strategy-badge ${s.priority}">${s.priority === 'critical' ? '🔥 Критично' : s.priority === 'important' ? '✅ Важно' : '📌 Среднее'}</span>
+        <h4>${s.title}</h4>
+        <p>${s.desc}</p>
+        <p style="margin-top:6px"><span style="color:var(--accent);font-size:11px">Частота: ${s.freq}</span> · <span style="color:var(--green);font-size:11px">Эффект: ${s.effect}</span></p>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===================== IG INSIGHTS =====================
+
+function renderIgInsights() {
+  const insights = [
+    { icon:'🎬', title:'Reels выигрывают по охвату', desc:'Рилсы стабильно обгоняют фото и карусели по просмотрам. Алгоритм агрессивно продвигает видео новой аудитории. Для роста — каждый пост должен быть рилсом.' },
+    { icon:'💬', title:'Комментарии = сигнал сообщества', desc:'Посты с вопросами получают в 3–5 раз больше комментариев. «Напишите Амин» или «Поделитесь с близкими» работает лучше пассивного текста.' },
+    { icon:'❤️', title:'Лайки = эмоциональный резонанс', desc:'Самые залайканные посты задевают исламские эмоции — благодарность, надежду, терпение, прощение. Аудитория лайкает, когда чувствует себя понятой.' },
+    { icon:'⏰', title:'Время публикации — пиковые окна', desc:'Лучшие результаты: 7–9 утра (после Фаджра) и 20–23 вечера (после Иша). Пятничные посты на ~40% эффективнее будних.' },
+    { icon:'🎠', title:'Карусели = контент для сохранений', desc:'Карусели генерируют наибольшее количество сохранений. Люди сохраняют подборки дуа, 99 имён Аллаха, уроки намаза. Охват накапливается со временем.' },
+    { icon:'📉', title:'Почему посты не заходят', desc:'Текстовые визуалы без эмоционального крючка; контент без чёткой исламской темы; публикации в нерабочее время (11–17); отсутствие CTA; рилсы со слабым первым кадром.' },
+  ];
+
+  const el = document.getElementById('ig-insights');
+  el.innerHTML = insights.map(i => `
+    <div class="strategy-item">
+      <div class="strategy-icon">${i.icon}</div>
+      <div class="strategy-body">
+        <h4>${i.title}</h4>
+        <p>${i.desc}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===================== COMPARE =====================
+
+function renderCompare() {
+  const rows = [
+    { metric:'Просмотры / Охват', threads:'1 879 908', ig:'1 114 513 (Reels)', winner:'🔵 Threads', note:'+69% у Threads' },
+    { metric:'Лайки (всего)', threads:'~102 000+', ig:'202 277', winner:'📸 Instagram', note:'2× у Instagram' },
+    { metric:'Комментарии', threads:'Нет агрег. дан.', ig:'1 797', winner:'📸 Instagram', note:'Instagram — комментируемее' },
+    { metric:'ER (вовлечённость)', threads:'5.45%', ig:'~18% (лайки/пост)', winner:'📸 Instagram', note:'Instagram в 3× глубже' },
+    { metric:'Топ-пост лайки', threads:'9 783', ig:'51 243', winner:'📸 Instagram', note:'В 5× больше' },
+    { metric:'Топ-пост охват', threads:'106 534', ig:'483 865 (Reel)', winner:'📸 Instagram', note:'Reels побили текст' },
+    { metric:'Постов за 90 дней', threads:'~50+', ig:'33', winner:'🔵 Threads', note:'Threads — больше контента' },
+    { metric:'Вирусность (шары)', threads:'20 (карусель)', ig:'— (нет данных)', winner:'🔵 Threads', note:'Threads — репосты видны' },
+    { metric:'Алгоритмический охват', threads:'Текст 10× ссылок', ig:'Reels → 400k+', winner:'📸 Instagram', note:'Reels — машина охвата' },
+  ];
+
+  const el = document.getElementById('compare-table');
+  const header = document.createElement('div');
+  header.style.cssText = 'display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1fr;border-bottom:2px solid var(--border)';
+  header.innerHTML = ['Метрика','Threads','Instagram','Победитель','Примечание'].map(h => `<div style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${h}</div>`).join('');
+  el.appendChild(header);
+
+  rows.forEach(r => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1fr;border-bottom:1px solid var(--border);transition:background .15s;cursor:default';
+    row.addEventListener('mouseenter', () => row.style.background = 'rgba(79,142,247,.04)');
+    row.addEventListener('mouseleave', () => row.style.background = '');
+    const winColor = r.winner.includes('Threads') ? '#5b86e5' : '#e1306c';
+    row.innerHTML = `
+      <div style="padding:14px 16px;font-size:13px;font-weight:500">${r.metric}</div>
+      <div style="padding:14px 16px;font-size:13px;color:${r.winner.includes('Threads') ? 'var(--green)' : 'var(--text)'}">${r.threads}</div>
+      <div style="padding:14px 16px;font-size:13px;color:${r.winner.includes('Instagram') ? 'var(--green)' : 'var(--text)'}">${r.ig}</div>
+      <div style="padding:14px 16px;font-size:13px;font-weight:600;color:${winColor}">${r.winner}</div>
+      <div style="padding:14px 16px;font-size:12px;color:var(--muted)">${r.note}</div>
+    `;
+    el.appendChild(row);
+  });
+
+  // Strengths
+  const threadsStr = [
+    '✅ Высокий органический охват текстового контента (106k+ на пост)',
+    '✅ Алгоритм продвигает аяты и хадисы без рекламного бюджета',
+    '✅ Вирусность через репосты: карусели активно пересылают',
+    '✅ Прямая связь с аудиторией через комментарии-дискуссии',
+    '✅ Быстрые результаты — публикация работает за часы',
+    '✅ Идеально для текстового исламского контента (цитаты, хадисы)',
+    '✅ 60 000+ подписчиков — готовая аудитория без рекламы',
+  ];
+  const igStr = [
+    '✅ Reels дают 400-500k просмотров на одно видео',
+    '✅ Лайки в 5× выше — топ-пост: 51 243 лайков',
+    '✅ Визуальный контент: карусели и видео конвертируют лучше',
+    '✅ Сохранения — контент живёт долго (карусели с дуа)',
+    '✅ Stories и Reels — полная воронка для продвижения Sajda App',
+    '✅ Более богатая аналитика: просмотры, plays, охват по типу',
+    '✅ Лучше для продажи/конверсии в установки приложения',
+  ];
+  document.getElementById('threads-strengths').innerHTML = threadsStr.map(s => `<li><span>${s}</span></li>`).join('');
+  document.getElementById('ig-strengths').innerHTML = igStr.map(s => `<li><span>${s}</span></li>`).join('');
+
+  // Content plan
+  const days = [
+    { day:'Пн', threads:'Аят Корана — мотивация начала недели', ig:'Карусель или фото' },
+    { day:'Вт', threads:'Хадис о благих делах (сунны, намаз)', ig:'Reel о функции Sajda App' },
+    { day:'Ср', threads:'История сахаба / Q&A', ig:'Reel духовная история' },
+    { day:'Чт', threads:'Хадис о прощении/рае', ig:'Фото/цитата' },
+    { day:'Пт', threads:'Серия «В пятницу о Пророке ﷺ»', ig:'Reel особой темы' },
+    { day:'Сб', threads:'Зикр / напоминание', ig:'Stories с опросом' },
+    { day:'Вс', threads:'Семейный контент', ig:'Недельный дайджест' },
+  ];
+  const planEl = document.getElementById('content-plan');
+  const planHeader = document.createElement('div');
+  planHeader.style.cssText = 'display:grid;grid-template-columns:80px 1fr 1fr;border-bottom:2px solid var(--border)';
+  planHeader.innerHTML = ['День','🔵 Threads','📸 Instagram'].map(h => `<div style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase">${h}</div>`).join('');
+  planEl.appendChild(planHeader);
+  days.forEach(d => {
+    const r = document.createElement('div');
+    r.style.cssText = 'display:grid;grid-template-columns:80px 1fr 1fr;border-bottom:1px solid var(--border)';
+    r.innerHTML = `
+      <div style="padding:14px 16px;font-size:13px;font-weight:700;color:var(--accent)">${d.day}</div>
+      <div style="padding:14px 16px;font-size:13px">${d.threads}</div>
+      <div style="padding:14px 16px;font-size:13px">${d.ig}</div>
+    `;
+    planEl.appendChild(r);
+  });
+
+  // Conclusions
+  const conclusions = [
+    { n:1, text:'Instagram Reels — главная машина охвата: 1 пост = 483 865 просмотров vs 106 534 у лучшего Threads', icon:'🚀' },
+    { n:2, text:'Threads выигрывает по глубине вовлечённости текстовой аудитории — ER 9%+ на коранические цитаты', icon:'📖' },
+    { n:3, text:'Общая аудитория — русскоязычные мусульмане СНГ, 25-34 года: контент должен быть глубоким и достоверным', icon:'👥' },
+    { n:4, text:'Рамадан-контент на обоих платформах дал пиковые результаты — следующий Рамадан планировать за 30+ дней', icon:'🌙' },
+    { n:5, text:'Ни одна платформа не заменяет другую: Threads = аудитория, Instagram = охват и конверсия', icon:'⚖️' },
+  ];
+  const conclusionsEl = document.getElementById('conclusions');
+  conclusionsEl.innerHTML = conclusions.map(c => `
+    <div style="display:flex;gap:16px;padding:16px 24px;border-bottom:1px solid var(--border);align-items:flex-start">
+      <div style="font-size:24px;min-width:40px;text-align:center">${c.icon}</div>
+      <div>
+        <div style="font-size:12px;color:var(--accent);font-weight:700;margin-bottom:4px">Вывод #${c.n}</div>
+        <div style="font-size:14px">${c.text}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===================== CHARTS =====================
+
+function initCharts() {
+  const chartDefaults = {
+    plugins: { legend: { labels: { color: '#8892a4', font: { size: 12 } } } },
+    scales: {
+      x: { ticks: { color: '#8892a4' }, grid: { color: 'rgba(45,49,72,.7)' } },
+      y: { ticks: { color: '#8892a4' }, grid: { color: 'rgba(45,49,72,.7)' } }
+    }
+  };
+
+  // Threads Types
+  new Chart(document.getElementById('chartThreadsTypes'), {
+    type: 'bar',
+    data: {
+      labels: ['Коран (текст)', 'Хадис (текст)', 'Вопрос-ответ', 'Карусель', 'Изображение', 'Ссылка'],
+      datasets: [{
+        label: 'Средние лайки',
+        data: [9783, 6094, 2880, 152, 90, 10],
+        backgroundColor: ['#22c55e','#22c55e','#f59e0b','#f59e0b','#ef4444','#ef4444'],
+        borderRadius: 6,
+      }]
+    },
+    options: { ...chartDefaults, plugins: { ...chartDefaults.plugins, legend: { display: false } } }
+  });
+
+  // Threads Top Views
+  new Chart(document.getElementById('chartThreadsTop'), {
+    type: 'bar',
+    data: {
+      labels: ['«Помните Меня»', '«Айша спросила»', '«Поистине, Аллах»', '«Ключ к раю»', '«Садака»'],
+      datasets: [{
+        label: 'Просмотры',
+        data: [106534, 89908, 79640, 71128, 58598],
+        backgroundColor: 'rgba(91,134,229,0.7)',
+        borderColor: '#5b86e5',
+        borderWidth: 1,
+        borderRadius: 6,
+      }]
+    },
+    options: { ...chartDefaults, plugins: { ...chartDefaults.plugins, legend: { display: false } }, indexAxis: 'y' }
+  });
+
+  // IG Types
+  const igByType = { Photo: [], Reel: [], Carousel: [] };
+  igAllPosts.forEach(p => { if (igByType[p.type]) igByType[p.type].push(p.likes); });
+  const avgByType = Object.entries(igByType).map(([t,arr]) => ({ t, avg: arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0 }));
+
+  new Chart(document.getElementById('chartIgTypes'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Фото', 'Reel', 'Карусель'],
+      datasets: [{
+        data: avgByType.map(a => a.avg),
+        backgroundColor: ['#e1306c','#ef4444','#f59e0b'],
+        borderColor: '#1a1d27',
+        borderWidth: 3,
+      }]
+    },
+    options: { plugins: { legend: { labels: { color: '#8892a4' } } } }
+  });
+
+  // IG Top 10 score
+  new Chart(document.getElementById('chartIgTop'), {
+    type: 'bar',
+    data: {
+      labels: igTopPosts.map(p => p.date),
+      datasets: [{
+        label: 'Балл вовлечённости',
+        data: igTopPosts.map(p => p.score),
+        backgroundColor: igTopPosts.map(p => p.type === 'Reel' ? '#ef4444' : p.type === 'Photo' ? '#e1306c' : '#f59e0b'),
+        borderRadius: 6,
+      }]
+    },
+    options: { ...chartDefaults, plugins: { ...chartDefaults.plugins, legend: { display: false } } }
+  });
+
+  // Compare
+  new Chart(document.getElementById('chartCompare'), {
+    type: 'radar',
+    data: {
+      labels: ['Просмотры', 'Лайки', 'Комменты', 'Подписчики', 'Постов/90д'],
+      datasets: [
+        {
+          label: '🔵 Threads',
+          data: [100, 40, 30, 100, 100],
+          backgroundColor: 'rgba(91,134,229,.2)',
+          borderColor: '#5b86e5',
+          pointBackgroundColor: '#5b86e5',
+        },
+        {
+          label: '📸 Instagram',
+          data: [59, 100, 100, 0, 66],
+          backgroundColor: 'rgba(225,48,108,.2)',
+          borderColor: '#e1306c',
+          pointBackgroundColor: '#e1306c',
+        }
+      ]
+    },
+    options: {
+      plugins: { legend: { labels: { color: '#8892a4' } } },
+      scales: { r: { ticks: { color: '#8892a4', backdropColor: 'transparent' }, grid: { color: 'rgba(45,49,72,.7)' }, pointLabels: { color: '#8892a4' } } }
+    }
+  });
+
+  // Top post compare
+  new Chart(document.getElementById('chartTopCompare'), {
+    type: 'bar',
+    data: {
+      labels: ['Threads топ\n(лайки)', 'Instagram топ\n(лайки)', 'Threads топ\n(просмотры)', 'Instagram Reel\n(просмотры)'],
+      datasets: [{
+        data: [9783, 51243, 106534, 483865],
+        backgroundColor: ['#5b86e5','#e1306c','#5b86e5','#e1306c'],
+        borderRadius: 6,
+      }]
+    },
+    options: { ...chartDefaults, plugins: { ...chartDefaults.plugins, legend: { display: false } } }
+  });
+}
+
+// ===================== TABS =====================
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector('.tab-' + (tab === 'compare' ? 'compare' : tab === 'instagram' ? 'ig' : 'threads')).classList.add('active');
+}
+
+// ===================== INIT =====================
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderThreadsTop();
+  renderThreadsLast();
+  renderThreadsContent();
+  renderAudience();
+  renderStrategy();
+  renderIgTable('ig-top-table', igTopPosts);
+  renderIgAll();
+  renderIgTable('ig-worst-table', igWorstPosts);
+  renderIgInsights();
+  renderCompare();
+  initCharts();
+});
+</script>
+</body>
+</html>

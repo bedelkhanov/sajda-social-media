@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sajda — Шортлист контент-криейторов CIS</title>
+<style>
+  :root {
+    --brand: #1a6b4a;
+    --brand-light: #e8f5ef;
+    --brand-mid: #2e9d6f;
+    --accent: #f59e0b;
+    --danger: #ef4444;
+    --warning: #f97316;
+    --neutral: #64748b;
+    --dark: #0f172a;
+    --border: #e2e8f0;
+    --tier1: #16a34a;
+    --tier2: #2563eb;
+    --tier3: #9333ea;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .cover {
+    background: linear-gradient(135deg, #0f2a1e 0%, #1a6b4a 60%, #2e9d6f 100%);
+    color: white;
+    padding: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: "👥";
+    position: absolute;
+    right: 48px;
+    top: 32px;
+    font-size: 100px;
+    opacity: 0.12;
+  }
+  .cover h1 { font-size: 28px; font-weight: 800; margin-bottom: 6px; }
+  .cover .sub { font-size: 15px; opacity: 0.85; margin-bottom: 20px; }
+  .cover .meta { display: flex; gap: 10px; flex-wrap: wrap; }
+  .cover .meta span {
+    background: rgba(255,255,255,0.14);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 28px 20px; }
+  .section {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--brand);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--brand-light);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Tier labels */
+  .tier-label {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+  .tier-hire { background: #dcfce7; color: #16a34a; }
+  .tier-partner { background: #dbeafe; color: #1d4ed8; }
+  .tier-ambassador { background: #f3e8ff; color: #7e22ce; }
+
+  /* Creator cards */
+  .creator-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    transition: box-shadow 0.15s;
+  }
+  .creator-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .creator-card.hire { border-left: 4px solid var(--tier1); }
+  .creator-card.partner { border-left: 4px solid var(--tier2); }
+  .creator-card.ambassador { border-left: 4px solid var(--tier3); }
+
+  .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .card-name { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+  .card-handle { font-size: 13px; color: var(--brand); font-weight: 600; margin-bottom: 4px; }
+  .card-country { font-size: 12px; color: var(--neutral); }
+  .card-badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
+
+  .stat-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .pill {
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .pill-ig { background: #fce7f3; color: #be185d; }
+  .pill-tt { background: #f0f0f0; color: #111; }
+  .pill-tg { background: #e0f2fe; color: #0369a1; }
+  .pill-yt { background: #fee2e2; color: #dc2626; }
+  .pill-followers { background: var(--brand-light); color: var(--brand); }
+  .pill-price { background: #fef3c7; color: #b45309; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+  .info-block h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--neutral); margin-bottom: 4px; }
+  .info-block p, .info-block li { font-size: 12.5px; color: #334155; }
+  .info-block ul { padding-left: 16px; line-height: 1.8; }
+
+  .fit-bar { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .fit-label { font-size: 11px; color: var(--neutral); font-weight: 600; min-width: 70px; }
+  .bar-outer { flex: 1; height: 6px; background: #e2e8f0; border-radius: 6px; }
+  .bar-inner { height: 100%; border-radius: 6px; }
+  .bar-green { background: #16a34a; }
+  .bar-yellow { background: #f59e0b; }
+  .bar-blue { background: #2563eb; }
+  .fit-score { font-size: 12px; font-weight: 700; min-width: 28px; text-align: right; }
+
+  .callout {
+    border-left: 4px solid var(--brand);
+    background: var(--brand-light);
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+    font-size: 13px;
+  }
+  .callout.warn { border-left-color: var(--warning); background: #fff7ed; }
+
+  /* Search tips */
+  .tip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .tip-grid { grid-template-columns: 1fr; } }
+  .tip-card {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .tip-card h4 { font-size: 12px; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
+  .tip-card p, .tip-card li { font-size: 12px; color: #475569; }
+  .tip-card ul { padding-left: 16px; line-height: 1.8; }
+
+  /* Hashtags */
+  .hashtag { display: inline-block; background: var(--brand-light); color: var(--brand); border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 600; margin: 2px; }
+
+  /* DM template */
+  .dm-box {
+    background: #f8fafc;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 13px;
+    color: #1e293b;
+    line-height: 1.8;
+    white-space: pre-line;
+  }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  p { font-size: 13.5px; color: #334155; margin-bottom: 6px; }
+
+  .tier-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    border-radius: 8px;
+  }
+  .ts-hire { background: #dcfce7; }
+  .ts-partner { background: #dbeafe; }
+  .ts-ambassador { background: #f3e8ff; }
+  .ts-hire h3 { color: #15803d; font-size: 14px; }
+  .ts-partner h3 { color: #1d4ed8; font-size: 14px; }
+  .ts-ambassador h3 { color: #7e22ce; font-size: 14px; }
+  .ts-hire p { color: #166534; font-size: 12px; margin: 0; }
+  .ts-partner p { color: #1e40af; font-size: 12px; margin: 0; }
+  .ts-ambassador p { color: #6b21a8; font-size: 12px; margin: 0; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>Sajda — Шортлист контент-криейторов CIS</h1>
+  <div class="sub">Мусульманские блогеры и создатели контента для найма или партнёрства · Россия, Казахстан, Узбекистан</div>
+  <div class="meta">
+    <span>📅 Март 2026</span>
+    <span>🔍 Источник: открытый поиск Instagram, TikTok</span>
+    <span>🎯 Цель: нанять контент-криейтора для Sajda</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ─── Вводная часть ─── -->
+<div class="section">
+  <div class="section-title">🎯 Что искать и в кого целиться</div>
+
+  <div class="callout">
+    <strong>Кого вам нужно нанять:</strong> Не звезду с 300K и ценником. Нужен живой мусульманин или мусульманка 20–30 лет, которые уже создают контент про ислам, понимают Reels/TikTok, умеют снимать и монтировать, и органично впишутся в голос Sajda. Золотой диапазон — 10K–80K подписчиков.
+  </div>
+
+  <div class="two-col" style="margin-top:14px;">
+    <div class="info-block">
+      <h4>✅ Идеальный кандидат</h4>
+      <ul>
+        <li>20–30 лет, практикующий мусульманин/мусульманка</li>
+        <li>10K–80K подписчиков (реальная аудитория)</li>
+        <li>Регулярный постинг — 3–5 раз в неделю</li>
+        <li>Умеет снимать Reels и TikTok-видео сам(а)</li>
+        <li>Не религиозный учёный — живой, современный человек</li>
+        <li>Русскоязычная аудитория (CIS)</li>
+        <li>Нет политического/радикального контента</li>
+      </ul>
+    </div>
+    <div class="info-block">
+      <h4>❌ Избегать</h4>
+      <ul>
+        <li>Слишком крупные (300K+) — дорого и сложно контролировать</li>
+        <li>Религиозный строгий тон — не совпадёт с tone of voice Sajda</li>
+        <li>Нерегулярный постинг (раз в месяц)</li>
+        <li>Политизированный / агрессивный контент</li>
+        <li>Только текстовый контент без видео</li>
+        <li>Фокус только на Дагестан/Чечня — узкая ниша</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TIER 1: ДЛЯ НАЙМА ─── -->
+<div class="section">
+  <div class="section-title">🟢 Tier 1 — Кандидаты для найма (или тесного партнёрства)</div>
+
+  <div class="tier-section-header ts-hire">
+    <div>
+      <h3>💼 Нанять как контент-криейтора</h3>
+      <p>Малые блогеры 10K–80K. Идеальный размер для найма на ставку или фриланс. Реальное вовлечение, доступная цена, аутентичный голос.</p>
+    </div>
+  </div>
+
+  <!-- Card 1 -->
+  <div class="creator-card hire">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Лена — Блог русской мусульманки</div>
+        <div class="card-handle">@lena_revert</div>
+        <div class="card-country">🇷🇺 Россия (Сибирь / Баку)</div>
+      </div>
+      <div class="card-badges">
+        <span class="tier-label tier-hire">🟢 НАНЯТЬ</span>
+      </div>
+    </div>
+    <div class="stat-pills">
+      <span class="pill pill-ig">Instagram: ~19K</span>
+      <span class="pill pill-followers">253 поста</span>
+      <span class="pill pill-price">Фриланс / Ставка</span>
+    </div>
+    <div class="two-col">
+      <div class="info-block">
+        <h4>Контент и тон</h4>
+        <ul>
+          <li>Лайфстайл русской мусульманки, история принятия ислама</li>
+          <li>Поддержка сестёр, духовные напоминания</li>
+          <li>Тёплый, личный, искренний тон</li>
+          <li>Близко к голосу Sajda — без радикализма, с теплотой</li>
+        </ul>
+      </div>
+      <div class="info-block">
+        <h4>Почему подходит Sajda</h4>
+        <ul>
+          <li>История конвертита = реальная история «я нашла Sajda»</li>
+          <li>Аудитория — русские мусульмане и конвертиты = наша ЦА</li>
+          <li>Доступна для найма на фриланс</li>
+          <li>Не перегружена рекламой — аутентичность сохранена</li>
+        </ul>
+      </div>
+    </div>
+    <div class="fit-bar"><div class="fit-label">Соответствие</div><div class="bar-outer"><div class="bar-inner bar-green" style="width:90%"></div></div><div class="fit-score" style="color:#16a34a">9/10</div></div>
+  </div>
+
+  <!-- Card 2 -->
+  <div class="creator-card hire">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Гульнур Ешенгелдиева — Арабский · Коран · Намаз</div>
+        <div class="card-handle">@gulnur_ustaza</div>
+        <div class="card-country">🇰🇿 Казахстан</div>
+      </div>
+      <div class="card-badges">
+        <span class="tier-label tier-hire">🟢 НАНЯТЬ</span>
+      </div>
+    </div>
+    <div class="stat-pills">
+      <span class="pill pill-ig">Instagram: активна</span>
+      <span class="pill pill-followers">Коран/намаз/арабский</span>
+      <span class="pill pill-price">Фриланс</span>
+    </div>
+    <div class="two-col">
+      <div class="info-block">
+        <h4>Контент и тон</h4>
+        <ul>
+          <li>Обучение намазу, арабскому языку, Корану</li>
+          <li>Практический образовательный контент</li>
+          <li>Аудитория — Казахстан, молодые мусульмане</li>
+          <li>Тон: учитель, наставник, тёплый</li>
+        </ul>
+      </div>
+      <div class="info-block">
+        <h4>Почему подходит Sajda</h4>
+        <ul>
+          <li>Прямое пересечение с Academy-разделом Sajda</li>
+          <li>Казахстанская аудитория — ключевой CIS-рынок</li>
+          <li>Образовательный формат = можно делать контент про функции</li>
+          <li>Реальная практика намаза — живая демонстрация Sajda</li>
+        </ul>
+      </div>
+    </div>
+    <div class="fit-bar"><div class="fit-label">Соответствие</div><div class="bar-outer"><div class="bar-inner bar-green" style="width:88%"></div></div><div class="fit-score" style="color:#16a34a">8.8/10</div></div>
+  </div>
+
+  <!-- Card 3 -->
+  <div class="creator-card hire">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Жазира Нурова — Таджвид · Коран · Намаз</div>
+        <div class="card-handle">@zhazira.nurova</div>
+        <div class="card-country">🇰🇿 Казахстан</div>
+      </div>
+      <div class="card-badges">
+        <span class="tier-label tier-hire">🟢 НАНЯТЬ</span>
+      </div>
+    </div>
+    <div class="stat-pills">
+      <span class="pill pill-ig">Instagram: активна</span>
+      <span class="pill pill-followers">Таджвид / Первый намаз</span>
+      <span class="pill pill-price">Фриланс</span>
+    </div>
+    <div class="two-col">
+      <div class="info-block">
+        <h4>Контент и тон</h4>
+        <ul>
+          <li>Обучение таджвиду, чтению Корана</li>
+          <li>Первый намаз — как научиться с нуля</li>
+          <li>Аудитория: начинающие, молодёжь Казахстана</li>
+          <li>Визуальный, понятный формат</li>
+        </ul>
+      </div>
+      <div class="info-block">
+        <h4>Почему подходит Sajda</h4>
+        <ul>
+          <li>«Первый намаз» — прямой сценарий использования Sajda</li>
+          <li>Контент: «Используй Sajda чтобы учить намаз» = готовый месседж</li>
+          <li>Казахская молодая аудитория — наш приоритет в CIS</li>
+          <li>Формат Reels/TikTok хорошо работает для обучения</li>
+        </ul>
+      </div>
+    </div>
+    <div class="fit-bar"><div class="fit-label">Соответствие</div><div class="bar-outer"><div class="bar-inner bar-green" style="width:85%"></div></div><div class="fit-score" style="color:#16a34a">8.5/10</div></div>
+  </div>
+
+  <!-- Card 4: найти самостоятельно -->
+  <div class="creator-card hire" style="border-style: dashed; background: #fafbfc;">
+    <div class="card-header">
+      <div>
+        <div class="card-name" style="color:var(--neutral);">+ Мусульманка из Татарстана/Башкортостана</div>
+        <div class="card-handle" style="color:var(--neutral);">Найти через ручной поиск TikTok</div>
+        <div class="card-country">🇷🇺 Татарстан / Башкортостан</div>
+      </div>
+      <div class="card-badges">
+        <span class="tier-label tier-hire">🟢 НАНЯТЬ</span>
+        <span style="font-size:11px; color:var(--neutral); background:#f1f5f9; padding:3px 8px; border-radius:8px;">Ищи вручную</span>
+      </div>
+    </div>
+    <div class="stat-pills">
+      <span class="pill" style="background:#f1f5f9; color:var(--neutral);">Целевой диапазон: 10K–50K</span>
+    </div>
+    <p style="font-size:12.5px; color:#475569;">Татарстан и Башкортостан — регионы с активной мусульманской общиной и развитой Instagram-культурой. Ищи хэштеги <strong>#мусульманкататарстан</strong>, <strong>#намазбашкортостан</strong>, <strong>#ислам_казань</strong> в TikTok и Instagram. Там много аккаунтов 15K–60K с правильным контентом. Лучше всего искать вручную — алгоритм покажет живых авторов.</p>
+  </div>
+</div>
+
+<!-- ─── TIER 2: ПАРТНЁРСТВО ─── -->
+<div class="section">
+  <div class="section-title">🔵 Tier 2 — Для платного партнёрства (100K–400K)</div>
+
+  <div class="tier-section-header ts-partner">
+    <div>
+      <h3>🤝 Платное партнёрство / спонсорство</h3>
+      <p>Слишком крупные для найма как сотрудника. Работать через рекламный контракт — 1–3 публикации в месяц. Цена: $100–500 за публикацию.</p>
+    </div>
+  </div>
+
+  <!-- Card Azaliya -->
+  <div class="creator-card partner">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Азалия — «Про ислам без стереотипов»</div>
+        <div class="card-handle">@_azaliya.blog · реклама: @azaliya_reklama</div>
+        <div class="card-country">🇷🇺 Россия</div>
+      </div>
+      <div class="card-badges"><span class="tier-label tier-partner">🔵 ПАРТНЁРСТВО</span></div>
+    </div>
+    <div class="stat-pills">
+      <span class="pill pill-ig">Instagram: 136K</span>
+      <span class="pill pill-followers">301 пост</span>
+      <span class="pill pill-price">~$200–300/пост</span>
+    </div>
+    <div class="two-col">
+      <div class="info-block">
+        <h4>Контент и тон</h4>
+        <ul>
+          <li>«Ислам без стереотипов» — современный, открытый взгляд</li>
+          <li>Разрушает мифы об исламе для русской аудитории</li>
+          <li>Активный рекламный аккаунт — работает с брендами</li>
+          <li>Лайфстайл + образование</li>
+        </ul>
+      </div>
+      <div class="info-block">
+        <h4>Почему подходит Sajda</h4>
+        <ul>
+          <li>136K — большой охват для одной публикации</li>
+          <li>Аудитория русскоязычных мусульман = наша ЦА</li>
+          <li>Уже работает с рекламой — быстро выйти на связь</li>
+          <li>Тон совпадает с Sajda: современный, без радикализма</li>
+        </ul>
+      </div>
+    </div>
+    <div class="fit-bar"><div class="fit-label">Совпадение</div><div class="bar-outer"><div class="bar-inner bar-blue" style="width:82%"></div></div><div class="fit-score" style="color:#1d4ed8">8.2/10</div></div>
+  </div>
+
+  <!-- Card Kirill -->
+  <div class="creator-card partner">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Кирилл Вадимович — Блог русского мусульманина</div>
+        <div class="card-handle">@kirill_jabrail (IG) · @kirill.jabrail (TikTok)</div>
+        <div class="card-country">🇷🇺 Россия</div>
+      </div>
+      <div class="card-badges"><span class="tier-label tier-partner">🔵 ПАРТНЁРСТВО</span></div>
+    </div>
+    <div class="stat-pills">
+      <span class="pill pill-ig">Instagram: 348K</span>
+      <span class="pill pill-tt">TikTok: активен</span>
+      <span class="pill pill-tg">Telegram: 6.7K</span>
+      <span class="pill pill-price">~$300–500/пост</span>
+    </div>
+    <div class="two-col">
+      <div class="info-block">
+        <h4>Контент и тон</h4>
+        <ul>
+          <li>«Почему русский тоже может быть мусульманином?»</li>
+          <li>Образование об исламе простым языком, без пафоса</li>
+          <li>История обращения — сильный нарратив</li>
+          <li>Работает на нескольких платформах</li>
+        </ul>
+      </div>
+      <div class="info-block">
+        <h4>Почему подходит Sajda</h4>
+        <ul>
+          <li>Одна публикация = охват 300K+ русскоязычных мусульман</li>
+          <li>TikTok + Instagram = двойной эффект</li>
+          <li>«Sajda — моё любимое приложение» от него звучит органично</li>
+          <li>Студент богословия — авторитет + доступность</li>
+        </ul>
+      </div>
+    </div>
+    <div class="fit-bar"><div class="fit-label">Совпадение</div><div class="bar-outer"><div class="bar-inner bar-blue" style="width:85%"></div></div><div class="fit-score" style="color:#1d4ed8">8.5/10</div></div>
+  </div>
+
+  <!-- Card Dnevnik -->
+  <div class="creator-card partner">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Дневник Мусульманки</div>
+        <div class="card-handle">@dnevnikmusulmanki</div>
+        <div class="card-country">🇷🇺 Россия</div>
+      </div>
+      <div class="card-badges"><span class="tier-label tier-partner">🔵 ПАРТНЁРСТВО</span></div>
+    </div>
+    <div class="stat-pills">
+      <span class="pill pill-ig">Instagram: 327K</span>
+      <span class="pill pill-followers">17K постов</span>
+      <span class="pill pill-price">~$200–400/пост</span>
+    </div>
+    <div class="two-col">
+      <div class="info-block">
+        <h4>Контент и тон</h4>
+        <ul>
+          <li>Повседневная жизнь мусульманки, духовные посты</li>
+          <li>Огромный объём контента (17K постов) = живой аккаунт</li>
+          <li>Реклама через direct — принимает предложения</li>
+          <li>Активная женская аудитория</li>
+        </ul>
+      </div>
+      <div class="info-block">
+        <h4>Почему подходит Sajda</h4>
+        <ul>
+          <li>327K женской мусульманской аудитории = ценный охват</li>
+          <li>Женская аудитория активно использует приложения намаза</li>
+          <li>Готовый рекламный канал — легко выйти на связь</li>
+        </ul>
+      </div>
+    </div>
+    <div class="fit-bar"><div class="fit-label">Совпадение</div><div class="bar-outer"><div class="bar-inner bar-blue" style="width:75%"></div></div><div class="fit-score" style="color:#1d4ed8">7.5/10</div></div>
+  </div>
+</div>
+
+<!-- ─── TIER 3: АМБАССАДОРЫ ─── -->
+<div class="section">
+  <div class="section-title">🟣 Tier 3 — Крупные амбассадоры (500K+)</div>
+
+  <div class="tier-section-header ts-ambassador">
+    <div>
+      <h3>🌟 Большие кампании / Амбассадорство</h3>
+      <p>Крупные площадки. Подходят для разовых кампаний или долгосрочного амбассадорства с серьёзным бюджетом. Цена: $500–2,000+ за кампанию.</p>
+    </div>
+  </div>
+
+  <!-- Nurlan -->
+  <div class="creator-card ambassador">
+    <div class="card-header">
+      <div>
+        <div class="card-name">Нурлан Байжигитов — «TikTok-имам»</div>
+        <div class="card-handle">@nurlan_baijigituly (KZ)</div>
+        <div class="card-country">🇰🇿 Казахстан</div>
+      </div>
+      <div class="card-badges"><span class="tier-label tier-ambassador">🟣 АМБАССАДОР</span></div>
+    </div>
+    <div class="stat-pills">
+      <span class="pill pill-ig">Instagram: 850K</span>
+      <span class="pill pill-tt">TikTok: 581K · 5M+ лайков</span>
+      <span class="pill pill-price">$1,000–2,000/кампания</span>
+    </div>
+    <p style="font-size:12.5px; color:#334155; margin-top:8px;">Имам, богослов, психолог. Объясняет ислам простым, современным языком. Казахстанская и русскоязычная аудитория. Один пост — охват 1M+ пользователей. Идеален для большой кампании «Sajda Premium» или запуска нового функционала.</p>
+    <div class="fit-bar"><div class="fit-label">Совпадение</div><div class="bar-outer"><div class="bar-inner" style="width:80%; background:#9333ea"></div></div><div class="fit-score" style="color:#9333ea">8/10</div></div>
+  </div>
+</div>
+
+<!-- ─── Как искать вручную ─── -->
+<div class="section">
+  <div class="section-title">🔍 Как самостоятельно найти ещё кандидатов</div>
+
+  <p style="margin-bottom:14px;">Ручной поиск в TikTok и Instagram даст лучшие результаты, чем любой инструмент. Вот точные инструкции:</p>
+
+  <div class="tip-grid">
+    <div class="tip-card">
+      <h4>📱 TikTok — искать по хэштегам</h4>
+      <ul>
+        <li><span class="hashtag">#намаз</span> <span class="hashtag">#ислам</span> <span class="hashtag">#мусульмане</span></li>
+        <li><span class="hashtag">#мусульманка</span> <span class="hashtag">#исламскийконтент</span></li>
+        <li><span class="hashtag">#намазвремя</span> <span class="hashtag">#коранчтение</span></li>
+        <li>Смотри видео с 50K–500K просмотров</li>
+        <li>Открой профиль → посмотри сколько видео в неделю</li>
+        <li>Нужно: минимум 3 видео/неделю, 10K–100K подписчиков</li>
+      </ul>
+    </div>
+    <div class="tip-card">
+      <h4>📸 Instagram — искать по хэштегам</h4>
+      <ul>
+        <li><span class="hashtag">#намаз</span> <span class="hashtag">#мусульманкароссия</span></li>
+        <li><span class="hashtag">#исламказахстан</span> <span class="hashtag">#намазказахстан</span></li>
+        <li><span class="hashtag">#ислам_сегодня</span> <span class="hashtag">#мусульманин</span></li>
+        <li>Сортируй по «Последние» — увидишь активных авторов</li>
+        <li>Ищи профили с 10–80K подписчиков, Reels-контентом</li>
+        <li>Проверь ER: лайков/подписчики > 3% = живая аудитория</li>
+      </ul>
+    </div>
+    <div class="tip-card">
+      <h4>🔎 Что проверить в профиле</h4>
+      <ul>
+        <li>Рилсы или TikTok-видео (умеет снимать?)</li>
+        <li>Последний пост: давно ли был? (должен быть ≤ 7 дней)</li>
+        <li>Нет политики, нет радикального контента</li>
+        <li>Тон: тёплый / живой / современный</li>
+        <li>Подписчики: смотри комментарии — реальные люди?</li>
+        <li>Есть ли email/direct для сотрудничества в bio?</li>
+      </ul>
+    </div>
+    <div class="tip-card">
+      <h4>🌐 Дополнительно: базы блогеров</h4>
+      <ul>
+        <li><strong>best-bloggers.kz</strong> — база блогеров Казахстана</li>
+        <li><strong>jagajam.com</strong> — рейтинг инстаблогеров по странам</li>
+        <li><strong>favikon.com</strong> — поиск инфлюенсеров по нише</li>
+        <li><strong>toping.uz</strong> — узбекские блогеры 2025</li>
+        <li>Halalguide.me — каталог мусульманских блогеров</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ─── DM шаблон ─── -->
+<div class="section">
+  <div class="section-title">✉️ Шаблон сообщения для выхода на связь</div>
+
+  <p style="margin-bottom:12px;">Отправлять в директ Instagram. Два варианта: для найма и для партнёрства.</p>
+
+  <h4 style="font-size:12px; text-transform:uppercase; letter-spacing:0.05em; color:var(--neutral); margin-bottom:8px;">Вариант A — Для найма контент-криейтора</h4>
+  <div class="dm-box">Ассаляму алейкум! Меня зовут [имя], я из команды Sajda — исламского приложения с 4.9★ и 10 миллионами пользователей.
+
+Мы ищем контент-криейтора, который будет создавать Reels и TikTok-видео для наших аккаунтов. Видели ваш контент — он именно в том духе, который нам нужен: живой, тёплый, без лишнего.
+
+Интересно было бы познакомиться и обсудить возможное сотрудничество на постоянной основе. Есть время для короткого звонка?
+
+С уважением,
+[Имя] | Sajda App</div>
+
+  <hr class="divider">
+
+  <h4 style="font-size:12px; text-transform:uppercase; letter-spacing:0.05em; color:var(--neutral); margin-bottom:8px;">Вариант B — Для разового партнёрства / рекламы</h4>
+  <div class="dm-box">Ассаляму алейкум! Мы из команды Sajda App — исламского приложения с рейтингом 4.9★ и 0 рекламы с 2012 года. 10M+ мусульман пользуются каждый день.
+
+Хотим предложить вам сотрудничество — органичный пост или Reels о приложении. Не шаблонная реклама, а честный отзыв от вас лично. Всё обсудим индивидуально.
+
+Напишите если интересно 🌙</div>
+</div>
+
+<!-- ─── Резюме ─── -->
+<div class="section">
+  <div class="section-title">📋 Итоговый план действий</div>
+  <ol style="padding-left:20px; font-size:13.5px; color:#334155; line-height:2.2;">
+    <li><strong>Сегодня:</strong> Открыть TikTok и Instagram, поискать по хэштегу <strong>#намаз</strong> и <strong>#мусульманка</strong> — просмотреть 20–30 профилей</li>
+    <li><strong>На этой неделе:</strong> Написать в direct кандидатам Tier 1 — <strong>@lena_revert, @gulnur_ustaza, @zhazira.nurova</strong></li>
+    <li><strong>Параллельно:</strong> Написать в <strong>@_azaliya.blog → @azaliya_reklama</strong> и <strong>@kirill_jabrail</strong> на партнёрство</li>
+    <li><strong>Выбрать 1 человека:</strong> 2–3 недели тестовое сотрудничество — 4–6 видео, смотрим результат</li>
+    <li><strong>После теста:</strong> Если всё ок — оформить как постоянного контент-криейтора на Sajda (фриланс или ставка)</li>
+  </ol>
+
+  <div class="callout" style="margin-top:16px;">
+    <strong>Главный принцип при найме:</strong> ищи человека, которому <em>реально нравится</em> Sajda. Самый органичный контент создаёт тот, кто сам пользуется приложением. Попроси скачать Sajda перед встречей — реакция покажет всё.
+  </div>
+</div>
+
+<div style="text-align:center; padding:20px 0; color:#94a3b8; font-size:11px;">
+  Sajda App · Шортлист контент-криейторов · Март 2026 · GOOD/APP
+</div>
+
+</div>
+</body>
+</html>

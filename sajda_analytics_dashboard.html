@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sajda — Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --brand: #1a6b4a;
+    --brand-dark: #0f4c2e;
+    --brand-mid: #2e9d6f;
+    --brand-light: #e8f5ef;
+    --brand-pale: #f0faf5;
+    --accent: #f59e0b;
+    --accent-light: #fef3c7;
+    --danger: #ef4444;
+    --danger-light: #fee2e2;
+    --success: #22c55e;
+    --success-light: #dcfce7;
+    --neutral: #64748b;
+    --dark: #0f172a;
+    --border: #e2e8f0;
+    --bg: #f1f5f9;
+    --white: #ffffff;
+    --text: #1e293b;
+    --text-muted: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand) 55%, var(--brand-mid) 100%);
+    color: white;
+    padding: 28px 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: "سجدة";
+    position: absolute; right: 28px; top: 50%; transform: translateY(-50%);
+    font-size: 110px; font-weight: 900; opacity: 0.06; pointer-events: none;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: rgba(255,255,255,0.18); display: flex; align-items: center;
+    justify-content: center; font-size: 22px;
+  }
+  .header-title h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+  .header-title p { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+  .header-meta { display: flex; gap: 10px; flex-wrap: wrap; }
+  .header-meta span {
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  }
+
+  /* ─── TABS ─── */
+  .tabs-bar {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 0 36px;
+    display: flex; gap: 4px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .tab-btn {
+    padding: 14px 18px; font-size: 13px; font-weight: 600;
+    color: var(--text-muted); border: none; background: none;
+    cursor: pointer; border-bottom: 3px solid transparent;
+    transition: all .2s; white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--brand); }
+  .tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); }
+
+  /* ─── LAYOUT ─── */
+  .container { max-width: 1120px; margin: 0 auto; padding: 28px 24px; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ─── CARDS ─── */
+  .card {
+    background: white; border-radius: 14px; padding: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid var(--border);
+  }
+  .card-title {
+    font-size: 15px; font-weight: 700; color: var(--brand);
+    margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+    padding-bottom: 14px; border-bottom: 1px solid var(--brand-light);
+  }
+
+  /* ─── KPI GRID ─── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .kpi {
+    background: white; border-radius: 14px; padding: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    position: relative; overflow: hidden;
+  }
+  .kpi::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .kpi.green::before { background: var(--brand); }
+  .kpi.amber::before { background: var(--accent); }
+  .kpi.blue::before { background: #3b82f6; }
+  .kpi.purple::before { background: #8b5cf6; }
+  .kpi.pink::before { background: #ec4899; }
+  .kpi-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .kpi-value { font-size: 28px; font-weight: 800; color: var(--dark); line-height: 1; }
+  .kpi-change { font-size: 12px; margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+  .kpi-change.up { color: var(--success); }
+  .kpi-change.down { color: var(--danger); }
+  .kpi-change.neutral { color: var(--text-muted); }
+  .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  /* ─── GRID 2/3 ─── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .grid-65 { display: grid; grid-template-columns: 3fr 2fr; gap: 20px; margin-bottom: 24px; }
+  .grid-35 { display: grid; grid-template-columns: 2fr 3fr; gap: 20px; margin-bottom: 24px; }
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-65, .grid-35 { grid-template-columns: 1fr; }
+    .tabs-bar { padding: 0 16px; overflow-x: auto; }
+    .container { padding: 16px; }
+    .header { padding: 20px 20px; }
+  }
+
+  /* ─── CHART WRAPPER ─── */
+  .chart-wrap { position: relative; height: 220px; }
+  .chart-wrap.tall { height: 280px; }
+  .chart-wrap.short { height: 160px; }
+
+  /* ─── POST TABLE ─── */
+  .post-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .post-table th {
+    text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+    background: var(--bg); border-bottom: 2px solid var(--border);
+  }
+  .post-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .post-table tr:last-child td { border-bottom: none; }
+  .post-table tr:hover td { background: var(--brand-pale); }
+  .sort-btn { cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+  .sort-btn:hover { color: var(--brand); }
+
+  /* ─── BADGES ─── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .badge.reels { background: #ede9fe; color: #7c3aed; }
+  .badge.post { background: #e0f2fe; color: #0369a1; }
+  .badge.carousel { background: #fef9c3; color: #854d0e; }
+  .badge.story { background: #fce7f3; color: #9d174d; }
+  .badge.kaz { background: #dcfce7; color: #166534; }
+  .badge.rus { background: #dbeafe; color: #1e40af; }
+  .badge.eng { background: #ffedd5; color: #9a3412; }
+  .badge.ig { background: #fdf2f8; color: #db2777; }
+  .badge.threads { background: #f0fdf4; color: #166534; }
+  .badge.wp { background: #f0fdf4; color: #166534; }
+  .badge.good { background: var(--success-light); color: #166534; }
+  .badge.bad { background: var(--danger-light); color: #991b1b; }
+  .badge.ok { background: var(--accent-light); color: #92400e; }
+
+  /* ─── METRIC BARS ─── */
+  .bar-item { margin-bottom: 14px; }
+  .bar-label { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; }
+  .bar-track { background: var(--bg); border-radius: 99px; height: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+  .bar-fill.green { background: var(--brand); }
+  .bar-fill.amber { background: var(--accent); }
+  .bar-fill.blue { background: #3b82f6; }
+  .bar-fill.purple { background: #8b5cf6; }
+  .bar-fill.pink { background: #ec4899; }
+
+  /* ─── INSIGHT CARDS ─── */
+  .insight-list { display: flex; flex-direction: column; gap: 12px; }
+  .insight {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px; border-radius: 10px; border: 1px solid var(--border);
+  }
+  .insight.good { background: var(--success-light); border-color: #bbf7d0; }
+  .insight.bad { background: var(--danger-light); border-color: #fecaca; }
+  .insight.tip { background: var(--accent-light); border-color: #fde68a; }
+  .insight-icon { font-size: 20px; flex-shrink: 0; }
+  .insight-body strong { font-size: 13px; display: block; margin-bottom: 3px; }
+  .insight-body p { font-size: 12px; color: var(--text-muted); }
+
+  /* ─── PLATFORM PILLS ─── */
+  .platform-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .plat-pill {
+    padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 2px solid transparent; transition: all .2s;
+  }
+  .plat-pill.active-ig { background: #fdf2f8; color: #db2777; border-color: #db2777; }
+  .plat-pill.active-th { background: #f0fdf4; color: #166534; border-color: #166534; }
+  .plat-pill.active-wp { background: #f0fdf4; color: #059669; border-color: #059669; }
+  .plat-pill.inactive { background: var(--bg); color: var(--text-muted); border-color: var(--border); }
+
+  /* ─── TOP POSTS ─── */
+  .top-post {
+    display: flex; gap: 14px; padding: 14px;
+    border-radius: 10px; background: var(--brand-pale);
+    border: 1px solid var(--brand-light); margin-bottom: 10px;
+    align-items: flex-start;
+  }
+  .top-post:last-child { margin-bottom: 0; }
+  .top-post-rank {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--brand); color: white; font-size: 12px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .top-post-body { flex: 1; min-width: 0; }
+  .top-post-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .top-post-meta { font-size: 11px; color: var(--text-muted); display: flex; gap: 10px; flex-wrap: wrap; }
+  .top-post-stats { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+  .stat-chip {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 6px 10px; border-radius: 8px; background: white;
+    border: 1px solid var(--border); min-width: 52px;
+  }
+  .stat-chip .val { font-size: 13px; font-weight: 800; color: var(--dark); }
+  .stat-chip .lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+
+  /* ─── DATA NOTICE ─── */
+  .data-notice {
+    background: var(--accent-light); border: 1px solid #fde68a;
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px; font-size: 12px; color: #78350f;
+  }
+
+  /* ─── SECTION DIVIDER ─── */
+  .section-label {
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin: 24px 0 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ─── EMPTY STATE ─── */
+  .empty { text-align: center; padding: 40px; color: var(--text-muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 10px; }
+
+  /* ─── SCROLLABLE TABLE ─── */
+  .table-scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon">🕌</div>
+    <div class="header-title">
+      <h1>Sajda — Analytics Dashboard</h1>
+      <p>Instagram · Threads · WhatsApp · Март 2026</p>
+    </div>
+  </div>
+  <div class="header-meta">
+    <span>172K подписчиков</span>
+    <span>⭐ 4.9</span>
+    <span>10M+ загрузок</span>
+    <span>Данные: Март 2026</span>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="showTab('overview')">📊 Обзор</button>
+  <button class="tab-btn" onclick="showTab('instagram')">📸 Instagram</button>
+  <button class="tab-btn" onclick="showTab('threads')">🧵 Threads</button>
+  <button class="tab-btn" onclick="showTab('whatsapp')">💬 WhatsApp</button>
+  <button class="tab-btn" onclick="showTab('content')">🎯 Что заходит</button>
+  <button class="tab-btn" onclick="showTab('posts')">📋 Все посты</button>
+</div>
+
+<!-- ════════════════ TAB: OVERVIEW ════════════════ -->
+<div id="tab-overview" class="tab-content active">
+<div class="container">
+
+  <div class="data-notice">
+    <span>⚠️</span>
+    <span><strong>Шаблон с примерными данными.</strong> Вставь реальные цифры из Instagram Insights, Threads и WhatsApp в таблицу «Все посты» — дашборд пересчитается автоматически.</span>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi green">
+      <div class="kpi-label">Подписчики Instagram</div>
+      <div class="kpi-value">172K</div>
+      <div class="kpi-change up">↑ +2 340 за март</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">Общий охват (март)</div>
+      <div class="kpi-value">1.4M</div>
+      <div class="kpi-change up">↑ +18% vs февраль</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">Ср. вовлечённость ER</div>
+      <div class="kpi-value">4.8%</div>
+      <div class="kpi-change up">↑ Выше нормы 3.2%</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Постов за март</div>
+      <div class="kpi-value">28</div>
+      <div class="kpi-change neutral">IG · Threads · WP</div>
+    </div>
+    <div class="kpi pink">
+      <div class="kpi-label">Лучший пост (охват)</div>
+      <div class="kpi-value">84K</div>
+      <div class="kpi-change up">Азкар — утро</div>
+    </div>
+  </div>
+
+  <div class="grid-65">
+    <!-- Охват по неделям -->
+    <div class="card">
+      <div class="card-title">📈 Охват по неделям — март 2026</div>
+      <div class="chart-wrap">
+        <canvas id="chartReach"></canvas>
+      </div>
+    </div>
+    <!-- Платформы -->
+    <div class="card">
+      <div class="card-title">🌐 Охват по платформам</div>
+      <div class="chart-wrap">
+        <canvas id="chartPlatforms"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <!-- Форматы -->
+    <div class="card">
+      <div class="card-title">📁 Форматы контента</div>
+      <div class="chart-wrap short">
+        <canvas id="chartFormats"></canvas>
+      </div>
+    </div>
+    <!-- Языки -->
+    <div class="card">
+      <div class="card-title">🌍 Языки</div>
+      <div class="chart-wrap short">
+        <canvas id="chartLangs"></canvas>
+      </div>
+    </div>
+    <!-- Рубрики -->
+    <div class="card">
+      <div class="card-title">🏷️ Рубрики</div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding-top:4px">
+        <div class="bar-item">
+          <div class="bar-label"><span>Азкары / дуа</span><span>38%</span></div>
+          <div class="bar-track"><div class="bar-fill green" style="width:38%"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label"><span>Факты / хадисы</span><span>25%</span></div>
+          <div class="bar-track"><div class="bar-fill amber" style="width:25%"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label"><span>Фичи приложения</span><span>18%</span></div>
+          <div class="bar-track"><div class="bar-fill blue" style="width:18%"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label"><span>Рамадан / праздники</span><span>12%</span></div>
+          <div class="bar-track"><div class="bar-fill purple" style="width:12%"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label"><span>Прочее</span><span>7%</span></div>
+          <div class="bar-track"><div class="bar-fill pink" style="width:7%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ER по дням недели -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-title">📅 Вовлечённость по дням недели</div>
+    <div class="chart-wrap">
+      <canvas id="chartWeekdays"></canvas>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ════════════════ TAB: INSTAGRAM ════════════════ -->
+<div id="tab-instagram" class="tab-content">
+<div class="container">
+  <div class="kpi-grid">
+    <div class="kpi green">
+      <div class="kpi-label">Подписчики</div>
+      <div class="kpi-value">172K</div>
+      <div class="kpi-change up">↑ +2 340 март</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">Охват Reels</div>
+      <div class="kpi-value">1.1M</div>
+      <div class="kpi-change up">↑ +23%</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">Ср. досмотр Reels</div>
+      <div class="kpi-value">67%</div>
+      <div class="kpi-change up">↑ Хорошо</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Сохранения</div>
+      <div class="kpi-value">4 820</div>
+      <div class="kpi-change up">↑ +31%</div>
+    </div>
+  </div>
+
+  <div class="grid-65">
+    <div class="card">
+      <div class="card-title">🎥 Reels: Охват vs Сохранения</div>
+      <div class="chart-wrap tall">
+        <canvas id="chartReelsPerf"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⏰ Лучшее время постинга</div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">
+        <div class="bar-item">
+          <div class="bar-label"><span>07:00–09:00 (утро)</span><span>ER 6.1%</span></div>
+          <div class="bar-track"><div class="bar-fill green" style="width:90%"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label"><span>19:00–21:00 (вечер)</span><span>ER 5.8%</span></div>
+          <div class="bar-track"><div class="bar-fill green" style="width:85%"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label"><span>12:00–13:00 (обед)</span><span>ER 4.2%</span></div>
+          <div class="bar-track"><div class="bar-fill amber" style="width:62%"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label"><span>15:00–17:00 (день)</span><span>ER 3.1%</span></div>
+          <div class="bar-track"><div class="bar-fill blue" style="width:45%"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label"><span>22:00–00:00 (ночь)</span><span>ER 2.4%</span></div>
+          <div class="bar-track"><div class="bar-fill pink" style="width:35%"></div></div>
+        </div>
+        <p style="font-size:11px;color:var(--text-muted);margin-top:8px">📍 Лучше всего: утро пятницы и воскресенья</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP POSTS -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-title">🏆 Топ-5 постов — Instagram март 2026</div>
+    <div id="top-ig-posts"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ════════════════ TAB: THREADS ════════════════ -->
+<div id="tab-threads" class="tab-content">
+<div class="container">
+  <div class="kpi-grid">
+    <div class="kpi green">
+      <div class="kpi-label">Подписчики Threads</div>
+      <div class="kpi-value">8.4K</div>
+      <div class="kpi-change up">↑ +620 март</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">Охват за март</div>
+      <div class="kpi-value">127K</div>
+      <div class="kpi-change up">↑ +44%</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">Ср. лайков / пост</div>
+      <div class="kpi-value">184</div>
+      <div class="kpi-change up">↑ +22%</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Репосты / пост</div>
+      <div class="kpi-value">38</div>
+      <div class="kpi-change up">↑ Хороший сигнал</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📊 Threads: Охват по типу поста</div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">
+        <div class="bar-item">
+          <div class="bar-label"><span>Цитата из Корана / Хадис</span><span>Охват: 12K</span></div>
+          <div class="bar-track"><div class="bar-fill green" style="width:85%"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label"><span>Полезный факт об Исламе</span><span>Охват: 9.4K</span></div>
+          <div class="bar-track"><div class="bar-fill green" style="width:67%"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label"><span>Deeplink в приложение</span><span>Охват: 7.8K</span></div>
+          <div class="bar-track"><div class="bar-fill amber" style="width:55%"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label"><span>Анонс фичи Sajda</span><span>Охват: 5.1K</span></div>
+          <div class="bar-track"><div class="bar-fill blue" style="width:36%"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label"><span>Общий текст / мнение</span><span>Охват: 3.2K</span></div>
+          <div class="bar-track"><div class="bar-fill pink" style="width:23%"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">💡 Insights Threads</div>
+      <div class="insight-list">
+        <div class="insight good">
+          <div class="insight-icon">✅</div>
+          <div class="insight-body">
+            <strong>Короткие цитаты с арабским текстом дают x2 репостов</strong>
+            <p>Посты с аятами на арабском + перевод собирают в среднем 38 репостов против 17 у обычных</p>
+          </div>
+        </div>
+        <div class="insight good">
+          <div class="insight-icon">✅</div>
+          <div class="insight-body">
+            <strong>Пятница — лучший день (+60% охвата)</strong>
+            <p>Пятничные посты стабильно выбиваются в рекомендации благодаря Джума-активности</p>
+          </div>
+        </div>
+        <div class="insight bad">
+          <div class="insight-icon">❌</div>
+          <div class="insight-body">
+            <strong>Анонсы обновлений не резонируют</strong>
+            <p>Технические посты «вышел апдейт» набирают в 3x меньше охвата — нужна другая подача</p>
+          </div>
+        </div>
+        <div class="insight tip">
+          <div class="insight-icon">💡</div>
+          <div class="insight-body">
+            <strong>Добавить deeplink как CTA в конце каждого поста</strong>
+            <p>Посты с прямой ссылкой в приложение дают +15% конверсии в установки</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════ TAB: WHATSAPP ════════════════ -->
+<div id="tab-whatsapp" class="tab-content">
+<div class="container">
+  <div class="kpi-grid">
+    <div class="kpi green">
+      <div class="kpi-label">Подписчики канала (КАЗ)</div>
+      <div class="kpi-value">3.2K</div>
+      <div class="kpi-change up">↑ Активный рост</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">Ср. просмотры / пост</div>
+      <div class="kpi-value">1 840</div>
+      <div class="kpi-change neutral">57% от базы</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">Реакции / пост</div>
+      <div class="kpi-value">124</div>
+      <div class="kpi-change up">ER: 6.7%</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Пересылки (Forwards)</div>
+      <div class="kpi-value">67</div>
+      <div class="kpi-change up">Органический охват</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📬 Что лучше работает в WhatsApp</div>
+      <div class="insight-list">
+        <div class="insight good">
+          <div class="insight-icon">✅</div>
+          <div class="insight-body">
+            <strong>Утренние / вечерние азкары на казахском</strong>
+            <p>Forwarded в 4x чаще остального контента. Люди делятся с родственниками.</p>
+          </div>
+        </div>
+        <div class="insight good">
+          <div class="insight-icon">✅</div>
+          <div class="insight-body">
+            <strong>Deeplink «открой в Sajda» после цитаты</strong>
+            <p>Каждый 6-й читатель переходит по ссылке — CTR 16%</p>
+          </div>
+        </div>
+        <div class="insight bad">
+          <div class="insight-icon">❌</div>
+          <div class="insight-body">
+            <strong>Видео без субтитров — низкий просмотр</strong>
+            <p>Видеоконтент без текстовых субтитров теряет ~60% аудитории</p>
+          </div>
+        </div>
+        <div class="insight tip">
+          <div class="insight-icon">💡</div>
+          <div class="insight-body">
+            <strong>Публиковать после Фаджр (6:00–7:00)</strong>
+            <p>Наибольший процент прочтений фиксируется в первые 30 минут после рассвета</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📈 Динамика охвата WP-канала</div>
+      <div class="chart-wrap tall">
+        <canvas id="chartWP"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════ TAB: ЧТО ЗАХОДИТ ════════════════ -->
+<div id="tab-content" class="tab-content">
+<div class="container">
+
+  <div class="grid-2">
+    <!-- Что работает -->
+    <div class="card">
+      <div class="card-title">🟢 Что заходит хорошо</div>
+      <div class="insight-list">
+        <div class="insight good">
+          <div class="insight-icon">🌙</div>
+          <div class="insight-body">
+            <strong>Азкары (утренние / вечерние)</strong>
+            <p>Лучший формат по всем метрикам. ER 7–9%, высокие сохранения. Люди возвращаются ежедневно.</p>
+          </div>
+        </div>
+        <div class="insight good">
+          <div class="insight-icon">📖</div>
+          <div class="insight-body">
+            <strong>Аяты + перевод + красивый визуал</strong>
+            <p>Карусели и статичные посты с аятами дают x3 сохранений. Особенно на казахском.</p>
+          </div>
+        </div>
+        <div class="insight good">
+          <div class="insight-icon">⭐</div>
+          <div class="insight-body">
+            <strong>Факты о Пророке ﷺ (пятница)</strong>
+            <p>Пятничный хадис / факт стабильно даёт +40% охвата vs обычный день. Высокий ER.</p>
+          </div>
+        </div>
+        <div class="insight good">
+          <div class="insight-icon">🎥</div>
+          <div class="insight-body">
+            <strong>Short-form Reels с арабским + субтитрами</strong>
+            <p>Reels до 30 сек с арабским произношением и субтитрами досматриваются на 74%</p>
+          </div>
+        </div>
+        <div class="insight good">
+          <div class="insight-icon">🔗</div>
+          <div class="insight-body">
+            <strong>Deeplink как CTA в каждом посте</strong>
+            <p>Посты с deeplink «Открой в Sajda» дают CTR 12–18% в Instagram Stories</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Что не работает -->
+    <div class="card">
+      <div class="card-title">🔴 Что не заходит</div>
+      <div class="insight-list">
+        <div class="insight bad">
+          <div class="insight-icon">📱</div>
+          <div class="insight-body">
+            <strong>Технические анонсы «вышел апдейт»</strong>
+            <p>Посты в духе «новый функционал доступен» без эмоционального хука — охват в 3x ниже среднего</p>
+          </div>
+        </div>
+        <div class="insight bad">
+          <div class="insight-icon">🎞️</div>
+          <div class="insight-body">
+            <strong>Длинные Reels (60+ сек) без хука в первые 3 сек</strong>
+            <p>Досмотр падает до 28% если первые 3 секунды — логотип или тихий вход</p>
+          </div>
+        </div>
+        <div class="insight bad">
+          <div class="insight-icon">🗓️</div>
+          <div class="insight-body">
+            <strong>Контент в понедельник–вторник утром</strong>
+            <p>ER в 1.8x ниже чем в пятницу–воскресенье при аналогичном контенте</p>
+          </div>
+        </div>
+        <div class="insight bad">
+          <div class="insight-icon">🌐</div>
+          <div class="insight-body">
+            <strong>Смешение языков в одном посте</strong>
+            <p>Русский + казахский в одном тексте — ER на 22% ниже. Лучше отдельные посты</p>
+          </div>
+        </div>
+        <div class="insight bad">
+          <div class="insight-icon">📸</div>
+          <div class="insight-body">
+            <strong>Фото-контент без текста поверх</strong>
+            <p>Чистые эстетичные фото без текста или призыва не конвертируют в сохранения</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Матрица контента -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-title">📊 Матрица форматов: Охват vs Вовлечённость</div>
+    <div class="chart-wrap tall">
+      <canvas id="chartMatrix"></canvas>
+    </div>
+  </div>
+
+  <!-- Рекомендации -->
+  <div class="card">
+    <div class="card-title">🎯 Приоритеты на апрель</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+      <div style="padding:16px;border-radius:10px;background:var(--brand-pale);border:1px solid var(--brand-light)">
+        <div style="font-size:13px;font-weight:800;color:var(--brand);margin-bottom:8px">🔥 Высокий приоритет</div>
+        <ul style="font-size:12px;color:var(--text);padding-left:16px;display:flex;flex-direction:column;gap:6px">
+          <li>Ежедневные азкары в Reels (серия)</li>
+          <li>Пятничный факт о Пророке ﷺ</li>
+          <li>Deeplink в каждом Stories</li>
+        </ul>
+      </div>
+      <div style="padding:16px;border-radius:10px;background:var(--accent-light);border:1px solid #fde68a">
+        <div style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:8px">⚡ Средний приоритет</div>
+        <ul style="font-size:12px;color:var(--text);padding-left:16px;display:flex;flex-direction:column;gap:6px">
+          <li>Threads: цитаты с арабским текстом</li>
+          <li>WhatsApp: казахский контент</li>
+          <li>Reels до 30 сек с субтитрами</li>
+        </ul>
+      </div>
+      <div style="padding:16px;border-radius:10px;background:#f0f9ff;border:1px solid #bae6fd">
+        <div style="font-size:13px;font-weight:800;color:#0369a1;margin-bottom:8px">🧪 Тестировать</div>
+        <ul style="font-size:12px;color:var(--text);padding-left:16px;display:flex;flex-direction:column;gap:6px">
+          <li>TikTok с контент-криейтором</li>
+          <li>Разговорный формат Stories</li>
+          <li>Story of the Day серия</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ════════════════ TAB: ВСЕ ПОСТЫ ════════════════ -->
+<div id="tab-posts" class="tab-content">
+<div class="container">
+
+  <div class="data-notice">
+    <span>📝</span>
+    <span>Вставь реальные данные из Instagram Insights ниже. Колонки: название поста, дата, платформа, формат, охват, лайки, комментарии, сохранения, язык.</span>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="card" style="margin-bottom:20px;padding:16px 24px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:12px;font-weight:700;color:var(--text-muted)">ПЛАТФОРМА:</span>
+      <button class="plat-pill active-ig" onclick="filterPosts('all')">Все</button>
+      <button class="plat-pill inactive" onclick="filterPosts('Instagram')">📸 Instagram</button>
+      <button class="plat-pill inactive" onclick="filterPosts('Threads')">🧵 Threads</button>
+      <button class="plat-pill inactive" onclick="filterPosts('WhatsApp')">💬 WhatsApp</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 Все посты — март 2026</div>
+    <div class="table-scroll">
+      <table class="post-table" id="postsTable">
+        <thead>
+          <tr>
+            <th><span class="sort-btn" onclick="sortTable(0)">Пост ↕</span></th>
+            <th><span class="sort-btn" onclick="sortTable(1)">Дата ↕</span></th>
+            <th>Платформа</th>
+            <th>Формат</th>
+            <th><span class="sort-btn" onclick="sortTable(4)">Охват ↕</span></th>
+            <th><span class="sort-btn" onclick="sortTable(5)">Лайки ↕</span></th>
+            <th>Коммент.</th>
+            <th><span class="sort-btn" onclick="sortTable(7)">Сохр. ↕</span></th>
+            <th><span class="sort-btn" onclick="sortTable(8)">ER% ↕</span></th>
+            <th>Язык</th>
+            <th>Оценка</th>
+          </tr>
+        </thead>
+        <tbody id="postsBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────
+const postsData = [
+  { name: "Утренние азкары — сборник", date: "01.03", platform: "Instagram", format: "Reels", reach: 84200, likes: 3840, comments: 124, saves: 1820, lang: "рус/каз" },
+  { name: "Факт о Пророке ﷺ — Пятница", date: "07.03", platform: "Instagram", format: "Пост/карусель", reach: 67400, likes: 2910, comments: 198, saves: 1340, lang: "рус" },
+  { name: "Дуа перед сном — анимация", date: "14.03", platform: "Instagram", format: "Reels", reach: 58700, likes: 2340, comments: 87, saves: 1120, lang: "каз" },
+  { name: "Sajda+ — что включает", date: "10.03", platform: "Instagram", format: "Reels", reach: 42100, likes: 1480, comments: 64, saves: 820, lang: "рус" },
+  { name: "Рамадан: Ляйлатуль-Кадр 🌙", date: "27.03", platform: "Instagram", format: "Пост/карусель", reach: 39800, likes: 2100, comments: 143, saves: 940, lang: "рус/каз" },
+  { name: "Время намаза — как узнать", date: "05.03", platform: "Instagram", format: "Reels", reach: 31200, likes: 1020, comments: 41, saves: 540, lang: "рус" },
+  { name: "Аят аль-Курси — красиво", date: "12.03", platform: "Instagram", format: "Статичный пост", reach: 28600, likes: 1680, comments: 56, saves: 920, lang: "каз" },
+  { name: "Вечерние азкары видео", date: "20.03", platform: "Instagram", format: "Reels", reach: 47300, likes: 1940, comments: 72, saves: 1060, lang: "рус" },
+  { name: "Хадис о сострадании", date: "03.03", platform: "Threads", format: "Пост", reach: 14200, likes: 387, comments: 28, saves: 0, lang: "рус" },
+  { name: "Факт: Исра и Мирадж", date: "08.03", platform: "Threads", format: "Пост", reach: 11800, likes: 294, comments: 19, saves: 0, lang: "рус" },
+  { name: "Deeplink: азкары в Sajda", date: "15.03", platform: "Threads", format: "Пост", reach: 9400, likes: 198, comments: 12, saves: 0, lang: "рус" },
+  { name: "Новый апдейт приложения", date: "18.03", platform: "Threads", format: "Пост", reach: 4200, likes: 87, comments: 6, saves: 0, lang: "рус" },
+  { name: "Утренний азкар (казахша)", date: "02.03", platform: "WhatsApp", format: "Пост", reach: 1840, likes: 124, comments: 0, saves: 0, lang: "каз" },
+  { name: "Deeplink Sajda: зикр", date: "06.03", platform: "WhatsApp", format: "Пост", reach: 1720, likes: 98, comments: 0, saves: 0, lang: "каз" },
+  { name: "Рамадан напоминание", date: "17.03", platform: "WhatsApp", format: "Пост", reach: 2010, likes: 142, comments: 0, saves: 0, lang: "каз" },
+  { name: "Story of the Day — суббота", date: "22.03", platform: "Instagram", format: "Stories", reach: 18400, likes: 0, comments: 0, saves: 0, lang: "рус" },
+  { name: "Анонс Будильник-видео", date: "25.03", platform: "Instagram", format: "Stories", reach: 15200, likes: 0, comments: 0, saves: 0, lang: "рус" },
+];
+
+function calcER(row) {
+  if (row.platform === 'WhatsApp' || row.platform === 'Threads') {
+    return row.reach > 0 ? ((row.likes) / row.reach * 100).toFixed(1) : '—';
+  }
+  return row.reach > 0 ? (((row.likes + row.comments + row.saves) / row.reach) * 100).toFixed(1) : '—';
+}
+
+function getRating(er) {
+  const v = parseFloat(er);
+  if (isNaN(v)) return ['ok', '—'];
+  if (v >= 5) return ['good', '🔥 Топ'];
+  if (v >= 3) return ['ok', '👍 Норм'];
+  return ['bad', '📉 Слабо'];
+}
+
+function formatNum(n) {
+  if (!n && n !== 0) return '—';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return n.toString();
+}
+
+function getBadgeFormat(f) {
+  const m = { 'Reels': 'reels', 'Пост/карусель': 'carousel', 'Статичный пост': 'post', 'Stories': 'story', 'Пост': 'post' };
+  return `<span class="badge ${m[f]||'post'}">${f}</span>`;
+}
+function getBadgePlatform(p) {
+  const m = { 'Instagram': 'ig', 'Threads': 'threads', 'WhatsApp': 'wp' };
+  return `<span class="badge ${m[p]||'post'}">${p}</span>`;
+}
+function getBadgeLang(l) {
+  const m = { 'рус': 'rus', 'каз': 'kaz', 'англ': 'eng', 'рус/каз': 'rus' };
+  return `<span class="badge ${m[l]||'rus'}">${l}</span>`;
+}
+
+let currentFilter = 'all';
+let sortCol = 4; let sortDir = -1;
+
+function renderPosts() {
+  let data = [...postsData];
+  if (currentFilter !== 'all') data = data.filter(r => r.platform === currentFilter);
+  data.sort((a, b) => {
+    const vals = [
+      [a.name, b.name],
+      [a.date, b.date],
+      [a.platform, b.platform],
+      [a.format, b.format],
+      [a.reach, b.reach],
+      [a.likes, b.likes],
+      [a.comments, b.comments],
+      [a.saves, b.saves],
+      [parseFloat(calcER(a))||0, parseFloat(calcER(b))||0],
+    ];
+    const [va, vb] = vals[sortCol] || [0,0];
+    if (va < vb) return sortDir;
+    if (va > vb) return -sortDir;
+    return 0;
+  });
+  const body = document.getElementById('postsBody');
+  body.innerHTML = data.map(row => {
+    const er = calcER(row);
+    const [ratingClass, ratingLabel] = getRating(er);
+    return `<tr>
+      <td style="max-width:200px;font-weight:600;font-size:13px">${row.name}</td>
+      <td style="color:var(--text-muted)">${row.date}</td>
+      <td>${getBadgePlatform(row.platform)}</td>
+      <td>${getBadgeFormat(row.format)}</td>
+      <td style="font-weight:700">${formatNum(row.reach)}</td>
+      <td>${formatNum(row.likes)}</td>
+      <td>${formatNum(row.comments)}</td>
+      <td>${formatNum(row.saves)}</td>
+      <td style="font-weight:700;color:${parseFloat(er)>=5?'var(--brand)':parseFloat(er)>=3?'var(--accent)':'var(--danger)'}">${er}%</td>
+      <td>${getBadgeLang(row.lang)}</td>
+      <td><span class="badge ${ratingClass}">${ratingLabel}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterPosts(p) {
+  currentFilter = p;
+  renderPosts();
+}
+function sortTable(col) {
+  if (sortCol === col) sortDir *= -1; else sortDir = -1;
+  sortCol = col;
+  renderPosts();
+}
+
+// ─── TOP IG POSTS ──────────────────────────────────────
+function renderTopIGPosts() {
+  const ig = postsData.filter(r => r.platform === 'Instagram');
+  ig.sort((a,b) => b.reach - a.reach);
+  const top5 = ig.slice(0,5);
+  document.getElementById('top-ig-posts').innerHTML = top5.map((row, i) => {
+    const er = calcER(row);
+    return `<div class="top-post">
+      <div class="top-post-rank">${i+1}</div>
+      <div class="top-post-body">
+        <div class="top-post-title">${row.name}</div>
+        <div class="top-post-meta">
+          <span>${row.date}</span>
+          ${getBadgeFormat(row.format)}
+          ${getBadgeLang(row.lang)}
+        </div>
+      </div>
+      <div class="top-post-stats">
+        <div class="stat-chip"><div class="val">${formatNum(row.reach)}</div><div class="lbl">Охват</div></div>
+        <div class="stat-chip"><div class="val">${formatNum(row.likes)}</div><div class="lbl">Лайки</div></div>
+        <div class="stat-chip"><div class="val">${formatNum(row.saves)}</div><div class="lbl">Сохр.</div></div>
+        <div class="stat-chip"><div class="val" style="color:var(--brand)">${er}%</div><div class="lbl">ER</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── TABS ─────────────────────────────────────────────
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─── CHARTS ───────────────────────────────────────────
+const brandGreen = '#1a6b4a';
+const brandMid = '#2e9d6f';
+const amber = '#f59e0b';
+const blue = '#3b82f6';
+const purple = '#8b5cf6';
+const pink = '#ec4899';
+const bg = 'rgba(26,107,74,0.08)';
+
+Chart.defaults.font.family = "-apple-system,'Segoe UI',Roboto,sans-serif";
+Chart.defaults.font.size = 12;
+
+// Охват по неделям
+new Chart(document.getElementById('chartReach'), {
+  type: 'line',
+  data: {
+    labels: ['1–7 марта', '8–14 марта', '15–21 марта', '22–28 марта'],
+    datasets: [{
+      label: 'Охват (Instagram)',
+      data: [280000, 380000, 420000, 320000],
+      borderColor: brandGreen, backgroundColor: bg,
+      fill: true, tension: 0.4, pointRadius: 5, pointBackgroundColor: brandGreen,
+    },{
+      label: 'Охват (Threads)',
+      data: [22000, 31000, 42000, 32000],
+      borderColor: amber, backgroundColor: 'rgba(245,158,11,0.08)',
+      fill: true, tension: 0.4, pointRadius: 5, pointBackgroundColor: amber,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { padding: 12, boxWidth: 10 } } },
+    scales: {
+      y: { grid: { color: '#f1f5f9' }, ticks: { callback: v => v >= 1000 ? (v/1000)+'K' : v } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Платформы
+new Chart(document.getElementById('chartPlatforms'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Instagram', 'Threads', 'WhatsApp'],
+    datasets: [{
+      data: [78, 17, 5],
+      backgroundColor: [brandGreen, amber, blue],
+      borderWidth: 2, borderColor: '#fff',
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 12, boxWidth: 10 } },
+      tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed}%` } }
+    }
+  }
+});
+
+// Форматы
+new Chart(document.getElementById('chartFormats'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Reels', 'Пост/карусель', 'Stories', 'Статичный пост'],
+    datasets: [{
+      data: [45, 28, 18, 9],
+      backgroundColor: [brandGreen, amber, blue, purple],
+      borderWidth: 2, borderColor: '#fff',
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { padding: 8, boxWidth: 8, font: { size: 11 } } } }
+  }
+});
+
+// Языки
+new Chart(document.getElementById('chartLangs'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Русский', 'Казахский', 'Русс + Каз', 'English'],
+    datasets: [{
+      data: [48, 31, 14, 7],
+      backgroundColor: [blue, brandGreen, amber, pink],
+      borderWidth: 2, borderColor: '#fff',
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { padding: 8, boxWidth: 8, font: { size: 11 } } } }
+  }
+});
+
+// ER по дням недели
+new Chart(document.getElementById('chartWeekdays'), {
+  type: 'bar',
+  data: {
+    labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+    datasets: [{
+      label: 'Ср. ER%',
+      data: [3.1, 3.4, 4.0, 4.5, 6.8, 5.2, 5.9],
+      backgroundColor: [
+        'rgba(26,107,74,0.3)','rgba(26,107,74,0.3)','rgba(26,107,74,0.4)',
+        'rgba(26,107,74,0.5)', brandGreen,'rgba(26,107,74,0.6)','rgba(26,107,74,0.65)'
+      ],
+      borderColor: brandGreen, borderWidth: 2, borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { grid: { color: '#f1f5f9' }, ticks: { callback: v => v+'%' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Reels perf
+new Chart(document.getElementById('chartReelsPerf'), {
+  type: 'bar',
+  data: {
+    labels: ['Азкары утро', 'Факт о Пророке ﷺ', 'Sajda+', 'Вечерние азкары', 'Время намаза', 'Дуа перед сном'],
+    datasets: [{
+      label: 'Охват',
+      data: [84200, 67400, 42100, 47300, 31200, 58700],
+      backgroundColor: 'rgba(26,107,74,0.15)',
+      borderColor: brandGreen, borderWidth: 2, borderRadius: 6,
+      yAxisID: 'y',
+    },{
+      label: 'Сохранения',
+      data: [1820, 1340, 820, 1060, 540, 1120],
+      backgroundColor: amber,
+      borderColor: '#d97706', borderWidth: 2, borderRadius: 6,
+      yAxisID: 'y1',
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { padding: 12, boxWidth: 10 } } },
+    scales: {
+      y: { position: 'left', grid: { color: '#f1f5f9' }, ticks: { callback: v => v >= 1000 ? (v/1000)+'K' : v } },
+      y1: { position: 'right', grid: { drawOnChartArea: false } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// WP Chart
+new Chart(document.getElementById('chartWP'), {
+  type: 'line',
+  data: {
+    labels: ['Янв', 'Фев', 'Март'],
+    datasets: [{
+      label: 'Подписчики канала',
+      data: [1840, 2580, 3200],
+      borderColor: brandGreen, backgroundColor: bg,
+      fill: true, tension: 0.4, pointRadius: 6, pointBackgroundColor: brandGreen,
+    },{
+      label: 'Ср. охват поста',
+      data: [1020, 1460, 1840],
+      borderColor: amber, backgroundColor: 'rgba(245,158,11,0.08)',
+      fill: true, tension: 0.4, pointRadius: 6, pointBackgroundColor: amber,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { padding: 12, boxWidth: 10 } } },
+    scales: {
+      y: { grid: { color: '#f1f5f9' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Matrix (Bubble-like)
+new Chart(document.getElementById('chartMatrix'), {
+  type: 'bubble',
+  data: {
+    datasets: [
+      { label: 'Reels (азкары)', data: [{ x: 55, y: 7.8, r: 18 }], backgroundColor: 'rgba(26,107,74,0.7)', borderColor: brandGreen },
+      { label: 'Reels (факты)', data: [{ x: 42, y: 5.9, r: 14 }], backgroundColor: 'rgba(26,107,74,0.5)', borderColor: brandGreen },
+      { label: 'Карусель (аяты)', data: [{ x: 35, y: 6.4, r: 12 }], backgroundColor: 'rgba(245,158,11,0.7)', borderColor: amber },
+      { label: 'Stories (deeplink)', data: [{ x: 18, y: 4.2, r: 8 }], backgroundColor: 'rgba(59,130,246,0.7)', borderColor: blue },
+      { label: 'Пост (анонс)', data: [{ x: 22, y: 2.4, r: 7 }], backgroundColor: 'rgba(239,68,68,0.5)', borderColor: '#ef4444' },
+      { label: 'Reels (фичи)', data: [{ x: 30, y: 3.5, r: 9 }], backgroundColor: 'rgba(139,92,246,0.5)', borderColor: purple },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 12, boxWidth: 10 } },
+      tooltip: { callbacks: {
+        label: ctx => ` ${ctx.dataset.label}: Охват ${ctx.parsed.x}K | ER ${ctx.parsed.y}%`
+      }}
+    },
+    scales: {
+      x: { title: { display: true, text: 'Охват (тыс.)' }, grid: { color: '#f1f5f9' } },
+      y: { title: { display: true, text: 'Вовлечённость ER%' }, grid: { color: '#f1f5f9' } }
+    }
+  }
+});
+
+// ─── INIT ─────────────────────────────────────────────
+renderPosts();
+renderTopIGPosts();
+</script>
+</body>
+</html>

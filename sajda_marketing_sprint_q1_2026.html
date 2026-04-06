@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sajda App — Competitive Analysis & 2-Week Marketing Sprint</title>
+<style>
+  :root {
+    --brand: #1a6b4a;
+    --brand-light: #e8f5ef;
+    --brand-mid: #2e9d6f;
+    --accent: #f59e0b;
+    --danger: #ef4444;
+    --warning: #f97316;
+    --neutral: #64748b;
+    --dark: #0f172a;
+    --light: #f8fafc;
+    --border: #e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .cover {
+    background: linear-gradient(135deg, #0f4c2e 0%, #1a6b4a 50%, #2e9d6f 100%);
+    color: white;
+    padding: 60px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: "سجدة";
+    position: absolute;
+    right: 40px;
+    top: 20px;
+    font-size: 120px;
+    opacity: 0.08;
+    font-weight: bold;
+  }
+  .cover h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+  .cover .sub { font-size: 16px; opacity: 0.85; margin-bottom: 24px; }
+  .cover .meta { display: flex; gap: 24px; flex-wrap: wrap; }
+  .cover .meta span {
+    background: rgba(255,255,255,0.15);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    backdrop-filter: blur(4px);
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+  .section {
+    background: white;
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--brand);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .num {
+    background: var(--brand);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  h3 { font-size: 15px; font-weight: 600; color: var(--dark); margin: 16px 0 8px; }
+  h4 { font-size: 13px; font-weight: 600; color: var(--neutral); text-transform: uppercase; letter-spacing: 0.05em; margin: 12px 0 6px; }
+  p { color: #334155; margin-bottom: 8px; }
+
+  /* Competitor cards */
+  .comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .comp-grid { grid-template-columns: 1fr; } }
+  .comp-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    position: relative;
+  }
+  .comp-card.sajda { border-color: var(--brand); background: var(--brand-light); }
+  .comp-card.competitor { border-color: #e2e8f0; background: white; }
+  .comp-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .comp-tag { font-size: 11px; color: var(--neutral); font-style: italic; margin-bottom: 12px; }
+  .stat-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .stat {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .stat.green { background: #dcfce7; color: #16a34a; }
+  .stat.yellow { background: #fef9c3; color: #a16207; }
+  .stat.red { background: #fee2e2; color: #dc2626; }
+  .stat.blue { background: #dbeafe; color: #1d4ed8; }
+  .stat.gray { background: #f1f5f9; color: #475569; }
+
+  /* Score table */
+  .score-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .score-table th {
+    background: var(--dark);
+    color: white;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+  }
+  .score-table th.sajda-col { background: var(--brand); }
+  .score-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  .score-table tr:last-child td { border-bottom: none; }
+  .score-table tr:hover td { background: #f8fafc; }
+  .score-table tr.total-row td { font-weight: 700; background: #f8fafc; font-size: 14px; }
+  .stars { letter-spacing: 1px; }
+  .s5 { color: #16a34a; }
+  .s4 { color: #84cc16; }
+  .s3 { color: var(--accent); }
+  .s2 { color: var(--warning); }
+  .s1 { color: var(--danger); }
+  .score-num { font-weight: 700; font-size: 15px; }
+  .sajda-score { color: var(--brand); }
+
+  /* Gap analysis */
+  .gap-list { list-style: none; padding: 0; }
+  .gap-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .gap-item:last-child { border-bottom: none; }
+  .gap-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .gap-critical { background: #fee2e2; }
+  .gap-high { background: #fef3c7; }
+  .gap-medium { background: #dbeafe; }
+  .gap-body { flex: 1; }
+  .gap-title { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+  .gap-desc { font-size: 12px; color: var(--neutral); }
+  .gap-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-weight: 700;
+    white-space: nowrap;
+    align-self: flex-start;
+    margin-top: 3px;
+  }
+  .badge-critical { background: #fee2e2; color: #dc2626; }
+  .badge-high { background: #fef3c7; color: #d97706; }
+  .badge-medium { background: #dbeafe; color: #2563eb; }
+
+  /* Sprint calendar */
+  .week-header {
+    background: linear-gradient(135deg, var(--brand), var(--brand-mid));
+    color: white;
+    padding: 14px 20px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .week-header h3 { color: white; margin: 0; font-size: 16px; }
+  .week-theme { font-size: 12px; opacity: 0.9; }
+  .task-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 20px; }
+  .task-table th {
+    background: #f8fafc;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--neutral);
+    border-bottom: 2px solid var(--border);
+  }
+  .task-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+  .task-table tr:hover td { background: #fafbfc; }
+  .priority-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .p-must { background: #fee2e2; color: #dc2626; }
+  .p-high { background: #fef3c7; color: #d97706; }
+  .p-nice { background: #f1f5f9; color: #64748b; }
+  .channel-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-right: 3px;
+  }
+  .ch-tiktok { background: #000; color: white; }
+  .ch-ig { background: linear-gradient(135deg, #e1306c, #833ab4); color: white; }
+  .ch-aso { background: #0070f3; color: white; }
+  .ch-push { background: #7c3aed; color: white; }
+  .ch-threads { background: #1a1a1a; color: white; }
+  .ch-influencer { background: #059669; color: white; }
+  .ch-all { background: #475569; color: white; }
+
+  /* KPIs */
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 600px) { .kpi-grid { grid-template-columns: 1fr 1fr; } }
+  .kpi-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .kpi-icon { font-size: 24px; margin-bottom: 6px; }
+  .kpi-target { font-size: 20px; font-weight: 800; color: var(--brand); }
+  .kpi-label { font-size: 11px; color: var(--neutral); margin-top: 2px; }
+  .kpi-baseline { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+  /* Content ideas */
+  .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .content-grid { grid-template-columns: 1fr; } }
+  .content-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    background: white;
+  }
+  .content-card .hook { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  .content-card .format { font-size: 11px; color: var(--neutral); margin-bottom: 4px; }
+  .content-card .why { font-size: 12px; color: #475569; }
+
+  /* Insights callout */
+  .callout {
+    border-left: 4px solid var(--brand);
+    background: var(--brand-light);
+    padding: 14px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+  }
+  .callout.warning { border-left-color: var(--warning); background: #fff7ed; }
+  .callout.danger { border-left-color: var(--danger); background: #fef2f2; }
+  .callout strong { font-weight: 700; }
+
+  /* Summary section */
+  .summary-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  @media (max-width: 600px) { .summary-box { grid-template-columns: 1fr; } }
+  .sum-card {
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .sum-card.strength { background: #dcfce7; border: 1px solid #86efac; }
+  .sum-card.weakness { background: #fee2e2; border: 1px solid #fca5a5; }
+  .sum-card h4 { color: #166534; margin-bottom: 8px; font-size: 12px; }
+  .sum-card.weakness h4 { color: #991b1b; }
+  .sum-card ul { padding-left: 16px; }
+  .sum-card li { font-size: 12px; margin-bottom: 4px; color: #1e293b; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  .footnote { font-size: 11px; color: #94a3b8; margin-top: 8px; font-style: italic; }
+  .big-number { font-size: 36px; font-weight: 800; color: var(--brand); line-height: 1; }
+  .metric-row { display: flex; gap: 24px; flex-wrap: wrap; margin: 16px 0; }
+  .metric { text-align: center; }
+  .metric .label { font-size: 11px; color: var(--neutral); margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <h1>Sajda App — Marketing Intelligence Report</h1>
+  <div class="sub">Competitive Analysis × 2-Week Sprint Plan · Sprint Q1-2026</div>
+  <div class="meta">
+    <span>📅 Sprint: 27 марта — 9 апреля 2026</span>
+    <span>🔍 Анализ: Muslim Pro · Athan · Quran.com</span>
+    <span>📊 Данные актуальны на март 2026</span>
+    <span>Составлено для GOOD/APP</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ─── SECTION 1: Executive Summary ─── -->
+<div class="section">
+  <div class="section-title"><span class="num">1</span> Общая картина — где стоит Sajda</div>
+
+  <div class="callout">
+    <strong>Главный вывод:</strong> Sajda — технически лучшее приложение в категории (рейтинг 4.9★, 0 рекламы), но маркетинговое присутствие в 3–10× слабее конкурентов. Главная дыра — отсутствие TikTok. Muslim Pro строит там аудиторию в 548 тысяч подписчиков, пока нас там нет.
+  </div>
+
+  <div class="metric-row">
+    <div class="metric">
+      <div class="big-number">4.9★</div>
+      <div class="label">Рейтинг — лучший в категории</div>
+    </div>
+    <div class="metric">
+      <div class="big-number">10M+</div>
+      <div class="label">Загрузок (App Store + Play)</div>
+    </div>
+    <div class="metric">
+      <div class="big-number">447K</div>
+      <div class="label">Отзывов в App Store</div>
+    </div>
+    <div class="metric">
+      <div class="big-number">0</div>
+      <div class="label">Рекламы с 2012 года — уникально</div>
+    </div>
+    <div class="metric">
+      <div class="big-number">❌</div>
+      <div class="label">Официальный TikTok — не существует</div>
+    </div>
+  </div>
+
+  <p>Рамадан 2026 (19 февраля — 19 марта) завершён. Сейчас начинается критическое окно пострамаданного удержания: пользователи, которые установили ежедневные практики, нуждаются в напоминании продолжать. Конкуренты уже запускают кампании «после Рамадана». Это наш спринт.</p>
+</div>
+
+<!-- ─── SECTION 2: Competitor Profiles ─── -->
+<div class="section">
+  <div class="section-title"><span class="num">2</span> Профили конкурентов — что они делают</div>
+
+  <div class="comp-grid">
+
+    <!-- Muslim Pro -->
+    <div class="comp-card competitor">
+      <div class="comp-name">🏆 Muslim Pro</div>
+      <div class="comp-tag">"Your Islamic App Companion" / "The Digital Home for All Things Muslim"</div>
+      <div class="stat-row">
+        <span class="stat yellow">4.3★ App Store</span>
+        <span class="stat yellow">4.4★ Play Store</span>
+        <span class="stat blue">40M+ загрузок</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat blue">Instagram: 381K</span>
+        <span class="stat blue">TikTok: 548K / 2.9M likes</span>
+      </div>
+      <h4>Что делает хорошо</h4>
+      <ul style="padding-left:16px; font-size:12px; color:#334155;">
+        <li>Крупнейшая соцсеть в категории — доминирует TikTok</li>
+        <li>Контент: обновления приложения, лайфстайл-ислам, Qalbox-стриминг</li>
+        <li>Рамадан 2026: «Deen Mode», Companion Tab, Ummah Feed</li>
+        <li>Premium монетизация: $4.99/мес или $29.99/год</li>
+        <li>Живые исламские классы, бронирование Умры</li>
+      </ul>
+      <h4>Слабые места</h4>
+      <ul style="padding-left:16px; font-size:12px; color:#334155;">
+        <li>Жалобы на рекламу — главная боль пользователей</li>
+        <li>UX перегружен, приложение «тяжёлое»</li>
+        <li>Скандал с передачей геоданных (2020) — репутационная дыра</li>
+        <li>Рейтинг 4.3 — значительно ниже Sajda</li>
+      </ul>
+    </div>
+
+    <!-- Athan -->
+    <div class="comp-card competitor">
+      <div class="comp-name">📡 Athan by IslamicFinder</div>
+      <div class="comp-tag">"The lifestyle app for Muslims"</div>
+      <div class="stat-row">
+        <span class="stat green">~4.7★ App Store</span>
+        <span class="stat blue">10M+ загрузок</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat blue">Instagram: 124K / 3,920 постов</span>
+        <span class="stat gray">TikTok: активен (@athan.app)</span>
+      </div>
+      <h4>Что делает хорошо</h4>
+      <ul style="padding-left:16px; font-size:12px; color:#334155;">
+        <li>Огромный объём контента — почти 4K постов в Instagram</li>
+        <li>Athan Academy — курсы по изучению ислама</li>
+        <li>SEO/ASO — сильные позиции в поиске</li>
+        <li>Регулярный, систематичный постинг</li>
+      </ul>
+      <h4>Слабые места</h4>
+      <ul style="padding-left:16px; font-size:12px; color:#334155;">
+        <li>Дизайн контента не выделяется — generic</li>
+        <li>Нет чёткого УТП против Sajda</li>
+        <li>Высокий объём ≠ высокое качество</li>
+      </ul>
+    </div>
+
+    <!-- Quran.com -->
+    <div class="comp-card competitor">
+      <div class="comp-name">📖 Quran.com</div>
+      <div class="comp-tag">"Beautiful, distraction-free Quran reading"</div>
+      <div class="stat-row">
+        <span class="stat green">4.7★ App Store</span>
+        <span class="stat gray">Бесплатно, без рекламы</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat gray">Instagram: минимальный</span>
+        <span class="stat gray">TikTok: слабый</span>
+      </div>
+      <h4>Что делает хорошо</h4>
+      <ul style="padding-left:16px; font-size:12px; color:#334155;">
+        <li>Лучший опыт чтения Корана — чистый минимализм</li>
+        <li>Несколько версий мусхафа + аудио без пауз</li>
+        <li>Сильная SEO-оптимизация сайта</li>
+        <li>Доверие исламского сообщества — долгая история</li>
+      </ul>
+      <h4>Слабые места</h4>
+      <ul style="padding-left:16px; font-size:12px; color:#334155;">
+        <li>Только Коран — нет времён намаза, зикров</li>
+        <li>Соцсети практически отсутствуют</li>
+        <li>Не «super app» — ограниченный функционал</li>
+      </ul>
+    </div>
+
+    <!-- Sajda -->
+    <div class="comp-card sajda">
+      <div class="comp-name">🌙 Sajda (мы)</div>
+      <div class="comp-tag">"Muslims super app" · No ads since 2012</div>
+      <div class="stat-row">
+        <span class="stat green">4.9★ App Store ← лучший</span>
+        <span class="stat green">4.8★ Play Store</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat blue">@sajda_app: 172K (RU/CIS)</span>
+        <span class="stat yellow">@sajda.app: 13K (EN) ← слабо</span>
+        <span class="stat red">TikTok: ❌ нет</span>
+      </div>
+      <h4>Сильные стороны</h4>
+      <ul style="padding-left:16px; font-size:12px; color:#334155;">
+        <li>Рейтинг 4.9 — абсолютный лидер категории</li>
+        <li>0 рекламы с 2012 — редкое УТП, вызывает доверие</li>
+        <li>30+ переводов Корана, точные времена намазов</li>
+        <li>Academy, 30-дневный Рамадан-курс, виджет Apple Watch</li>
+        <li>Чистый, минималистичный UX без лишнего</li>
+      </ul>
+      <h4>Что нужно срочно исправить</h4>
+      <ul style="padding-left:16px; font-size:12px; color:#334155;">
+        <li>TikTok: полное отсутствие = упущенная аудитория</li>
+        <li>Английский аккаунт @sajda.app: только 13K фолловеров</li>
+        <li>Контент непоследователен, нет вирального формата</li>
+        <li>ASO не обновлён под тренды 2026</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─── SECTION 3: Scoring Matrix ─── -->
+<div class="section">
+  <div class="section-title"><span class="num">3</span> Матрица оценки — по 5-балльной шкале</div>
+  <p style="margin-bottom:16px; font-size:12px; color:var(--neutral);">Оценка по 10 ключевым маркетинговым измерениям. Чем выше — тем лучше.</p>
+
+  <table class="score-table">
+    <thead>
+      <tr>
+        <th>Измерение</th>
+        <th class="sajda-col">🌙 Sajda</th>
+        <th>🏆 Muslim Pro</th>
+        <th>📡 Athan</th>
+        <th>📖 Quran.com</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Рейтинг в сторах</strong></td>
+        <td class="sajda-score"><span class="score-num">5</span> <span class="stars s5">★★★★★</span></td>
+        <td><span class="score-num">3</span> <span class="stars s3">★★★☆☆</span></td>
+        <td><span class="score-num">4</span> <span class="stars s4">★★★★☆</span></td>
+        <td><span class="score-num">4</span> <span class="stars s4">★★★★☆</span></td>
+      </tr>
+      <tr>
+        <td><strong>Объём пользователей</strong></td>
+        <td class="sajda-score"><span class="score-num">4</span> <span class="stars s4">★★★★☆</span></td>
+        <td><span class="score-num">5</span> <span class="stars s5">★★★★★</span></td>
+        <td><span class="score-num">4</span> <span class="stars s4">★★★★☆</span></td>
+        <td><span class="score-num">3</span> <span class="stars s3">★★★☆☆</span></td>
+      </tr>
+      <tr>
+        <td><strong>UX / дизайн приложения</strong></td>
+        <td class="sajda-score"><span class="score-num">5</span> <span class="stars s5">★★★★★</span></td>
+        <td><span class="score-num">3</span> <span class="stars s3">★★★☆☆</span></td>
+        <td><span class="score-num">3</span> <span class="stars s3">★★★☆☆</span></td>
+        <td><span class="score-num">4</span> <span class="stars s4">★★★★☆</span></td>
+      </tr>
+      <tr style="background:#fff5f5">
+        <td><strong>TikTok присутствие</strong></td>
+        <td><span class="score-num" style="color:#dc2626">1</span> <span class="stars s1">★☆☆☆☆</span></td>
+        <td><span class="score-num">5</span> <span class="stars s5">★★★★★</span></td>
+        <td><span class="score-num">3</span> <span class="stars s3">★★★☆☆</span></td>
+        <td><span class="score-num">1</span> <span class="stars s1">★☆☆☆☆</span></td>
+      </tr>
+      <tr style="background:#fff5f5">
+        <td><strong>Instagram (английский)</strong></td>
+        <td><span class="score-num" style="color:#f97316">2</span> <span class="stars s2">★★☆☆☆</span></td>
+        <td><span class="score-num">5</span> <span class="stars s5">★★★★★</span></td>
+        <td><span class="score-num">4</span> <span class="stars s4">★★★★☆</span></td>
+        <td><span class="score-num">2</span> <span class="stars s2">★★☆☆☆</span></td>
+      </tr>
+      <tr>
+        <td><strong>Объём и регулярность контента</strong></td>
+        <td class="sajda-score"><span class="score-num" style="color:#f97316">2</span> <span class="stars s2">★★☆☆☆</span></td>
+        <td><span class="score-num">5</span> <span class="stars s5">★★★★★</span></td>
+        <td><span class="score-num">5</span> <span class="stars s5">★★★★★</span></td>
+        <td><span class="score-num">2</span> <span class="stars s2">★★☆☆☆</span></td>
+      </tr>
+      <tr>
+        <td><strong>Качество и виральность контента</strong></td>
+        <td class="sajda-score"><span class="score-num">3</span> <span class="stars s3">★★★☆☆</span></td>
+        <td><span class="score-num">4</span> <span class="stars s4">★★★★☆</span></td>
+        <td><span class="score-num">3</span> <span class="stars s3">★★★☆☆</span></td>
+        <td><span class="score-num">3</span> <span class="stars s3">★★★☆☆</span></td>
+      </tr>
+      <tr style="background:#fff5f5">
+        <td><strong>ASO-оптимизация</strong></td>
+        <td><span class="score-num" style="color:var(--accent)">3</span> <span class="stars s3">★★★☆☆</span></td>
+        <td><span class="score-num">5</span> <span class="stars s5">★★★★★</span></td>
+        <td><span class="score-num">4</span> <span class="stars s4">★★★★☆</span></td>
+        <td><span class="score-num">4</span> <span class="stars s4">★★★★☆</span></td>
+      </tr>
+      <tr>
+        <td><strong>Уникальное ценностное предложение</strong></td>
+        <td class="sajda-score"><span class="score-num">5</span> <span class="stars s5">★★★★★</span></td>
+        <td><span class="score-num">3</span> <span class="stars s3">★★★☆☆</span></td>
+        <td><span class="score-num">3</span> <span class="stars s3">★★★☆☆</span></td>
+        <td><span class="score-num">4</span> <span class="stars s4">★★★★☆</span></td>
+      </tr>
+      <tr>
+        <td><strong>Чёткость позиционирования бренда</strong></td>
+        <td class="sajda-score"><span class="score-num">3</span> <span class="stars s3">★★★☆☆</span></td>
+        <td><span class="score-num">4</span> <span class="stars s4">★★★★☆</span></td>
+        <td><span class="score-num">4</span> <span class="stars s4">★★★★☆</span></td>
+        <td><span class="score-num">4</span> <span class="stars s4">★★★★☆</span></td>
+      </tr>
+      <tr class="total-row">
+        <td><strong>ИТОГО / 50</strong></td>
+        <td style="color:var(--brand); font-size:18px;"><strong>33</strong></td>
+        <td style="font-size:18px;"><strong>42</strong></td>
+        <td style="font-size:18px;"><strong>37</strong></td>
+        <td style="font-size:18px;"><strong>31</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout warning" style="margin-top:16px;">
+    <strong>Что говорит матрица:</strong> У Sajda лучший продукт (UX + рейтинг + УТП), но маркетинговый разрыв в 9 баллов с Muslim Pro — это реальная угроза роста. Мы проигрываем не продуктом, а дистрибуцией и присутствием.
+  </div>
+</div>
+
+<!-- ─── SECTION 4: Gap Analysis ─── -->
+<div class="section">
+  <div class="section-title"><span class="num">4</span> Анализ разрывов — где мы теряем</div>
+
+  <ul class="gap-list">
+
+    <li class="gap-item">
+      <div class="gap-icon gap-critical">🔴</div>
+      <div class="gap-body">
+        <div class="gap-title">TikTok: нет аккаунта</div>
+        <div class="gap-desc">Muslim Pro: 548K подписчиков, 2.9M лайков. Athan: активно присутствует. Sajda: официального аккаунта нет вообще. TikTok — главный канал роста для молодой мусульманской аудитории 18–30 лет. Алгоритм даёт бесплатный охват новым аккаунтам. Каждый день без TikTok — упущенные установки.</div>
+      </div>
+      <span class="gap-badge badge-critical">КРИТИЧНО</span>
+    </li>
+
+    <li class="gap-item">
+      <div class="gap-icon gap-critical">🔴</div>
+      <div class="gap-body">
+        <div class="gap-title">Instagram на английском (@sajda.app): 13K vs 381K у Muslim Pro</div>
+        <div class="gap-desc">Основной международный аккаунт в 29× меньше главного конкурента. При этом русскоязычный @sajda_app имеет 172K — есть знания и опыт. Нужно транслировать их на английский рынок. Контент (@sajda.app): всего 53 поста.</div>
+      </div>
+      <span class="gap-badge badge-critical">КРИТИЧНО</span>
+    </li>
+
+    <li class="gap-item">
+      <div class="gap-icon gap-high">🟡</div>
+      <div class="gap-body">
+        <div class="gap-title">ASO: описания в сторах не обновлены под 2026</div>
+        <div class="gap-desc">Конкуренты обновляют описания под Рамадан, новые функции, сезонные ключевики. Muslim Pro уже называется «Ramadan 2026» в заголовке. Нужно обновить title/subtitle в iOS (под ИИ-поиск Apple), добавить «Wudu guide», «Apple Watch», «30-day program» как ключевые слова.</div>
+      </div>
+      <span class="gap-badge badge-high">ВЫСОКИЙ</span>
+    </li>
+
+    <li class="gap-item">
+      <div class="gap-icon gap-high">🟡</div>
+      <div class="gap-body">
+        <div class="gap-title">Нет регулярной контентной стратегии</div>
+        <div class="gap-desc">Athan публикует почти ежедневно (3,920 постов). Sajda — нерегулярно. Нет форматов «сейвбейт-каруселей», нет образовательных Reels, нет вирального формата. Контент не работает системно.</div>
+      </div>
+      <span class="gap-badge badge-high">ВЫСОКИЙ</span>
+    </li>
+
+    <li class="gap-item">
+      <div class="gap-icon gap-medium">🔵</div>
+      <div class="gap-body">
+        <div class="gap-title">Threads: отсутствие</div>
+        <div class="gap-desc">Молодая исламская аудитория переходит на Threads. Ни один конкурент не занял эту нишу плотно — у нас есть шанс стать первым исламским super-app, активно присутствующим в Threads.</div>
+      </div>
+      <span class="gap-badge badge-medium">СРЕДНИЙ</span>
+    </li>
+
+    <li class="gap-item">
+      <div class="gap-icon gap-medium">🔵</div>
+      <div class="gap-body">
+        <div class="gap-title">Позиционирование «No ads» не используется агрессивно</div>
+        <div class="gap-desc">«0 рекламы с 2012» — это бомба против Muslim Pro, где реклама — главная жалоба. Мы не используем это как контент-оружие. Сравнительный контент «Sajda vs другие» практически отсутствует.</div>
+      </div>
+      <span class="gap-badge badge-medium">СРЕДНИЙ</span>
+    </li>
+
+  </ul>
+</div>
+
+<!-- ─── SECTION 5: Opportunities ─── -->
+<div class="section">
+  <div class="section-title"><span class="num">5</span> Возможности, которые ещё не занял никто</div>
+
+  <div class="summary-box">
+    <div class="sum-card strength">
+      <h4>💡 Незанятые позиции</h4>
+      <ul>
+        <li>«Лучший рейтинг в категории» — никто явно не использует</li>
+        <li>«0 рекламы» как контент-нарратив против Muslim Pro</li>
+        <li>Post-Ramadan habit content — редкий формат</li>
+        <li>CIS-рынок: мы уже лидеры — усилить интернационально</li>
+        <li>Threads как первый исламский app там</li>
+        <li>TikTok = 0 конкуренции от нас сейчас</li>
+      </ul>
+    </div>
+    <div class="sum-card weakness">
+      <h4>⚠️ Угрозы, которые нельзя игнорировать</h4>
+      <ul>
+        <li>Muslim Pro: Ramadan 2026 — мощная кампания уже идёт</li>
+        <li>TikTok даёт конкурентам бесплатный органический охват</li>
+        <li>Athan: 3,920 постов = SEO-доминирование в соцсетях</li>
+        <li>Если не действовать сейчас — разрыв увеличится</li>
+        <li>Post-Ramadan — короткое окно (только 2–3 недели)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SECTION 6: Sprint Plan ─── -->
+<div class="section">
+  <div class="section-title"><span class="num">6</span> 2-недельный маркетинговый спринт</div>
+
+  <div class="callout">
+    <strong>Тема спринта:</strong> «Рамадан закончился — практика нет» (Post-Ramadan Habit Retention + TikTok Launch)<br>
+    <strong>Период:</strong> 27 марта — 9 апреля 2026<br>
+    <strong>Контекст:</strong> Рамадан 2026 завершился 19 марта. У нас есть 2–3 недели, чтобы конвертировать рамаданских пользователей в постоянных. Параллельно — запускаем TikTok и разгоняем английский Instagram.
+  </div>
+
+  <!-- Week 1 -->
+  <div class="week-header">
+    <div>
+      <h3>Неделя 1 · 27 марта — 2 апреля</h3>
+      <div class="week-theme">Тема: Фундамент и запуск TikTok</div>
+    </div>
+    <div style="text-align:right; font-size:12px; opacity:0.9;">Приоритет: TikTok + ASO + Post-Ramadan</div>
+  </div>
+
+  <table class="task-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Задача</th>
+        <th>Канал</th>
+        <th>Дни</th>
+        <th>Приоритет</th>
+        <th>Описание / Контент</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td><strong>Создать TikTok @sajdaapp</strong></td>
+        <td><span class="channel-badge ch-tiktok">TikTok</span></td>
+        <td>Пн 27 марта</td>
+        <td><span class="priority-badge p-must">MUST</span></td>
+        <td>Регистрация, заполнение профиля, bio: «Приложение с 4.9★ и 0 рекламы с 2012». Ссылка на App Store + Play.</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><strong>TikTok Видео #1: «Почему 4.9 звезды?»</strong></td>
+        <td><span class="channel-badge ch-tiktok">TikTok</span></td>
+        <td>Пн–Вт 27–28</td>
+        <td><span class="priority-badge p-must">MUST</span></td>
+        <td>Хук: «Какое исламское приложение имеет самый высокий рейтинг в мире?» → Sajda 4.9★. Формат: screen-record + закадровый голос. 30–45 сек.</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><strong>TikTok Видео #2: «0 рекламы с 2012»</strong></td>
+        <td><span class="channel-badge ch-tiktok">TikTok</span></td>
+        <td>Ср 29 марта</td>
+        <td><span class="priority-badge p-must">MUST</span></td>
+        <td>Хук: «Это единственное мусульманское приложение без рекламы с 2012 года» → показ чистого UX vs скриншоты приложений с рекламой (без прямого называния конкурента). Сильный контраст.</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><strong>Push-уведомление: Пост-Рамадан #1</strong></td>
+        <td><span class="channel-badge ch-push">Push</span></td>
+        <td>Пн 27 марта</td>
+        <td><span class="priority-badge p-must">MUST</span></td>
+        <td>«Рамадан закончился, но ваша практика — нет. Ваше расписание намазов ждёт вас.» (EN + RU + AR версии)</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><strong>Instagram @sajda.app: Пост-Рамадан карусель</strong></td>
+        <td><span class="channel-badge ch-ig">Instagram</span></td>
+        <td>Вт 28 марта</td>
+        <td><span class="priority-badge p-must">MUST</span></td>
+        <td>Карусель: «5 духовных привычек, которые стоит сохранить после Рамадана» — save-bait формат. 5 слайдов, минимализм, зелёный бренд. Caption: «Сохрани, чтобы не забыть ✨»</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td><strong>ASO аудит iOS (App Store)</strong></td>
+        <td><span class="channel-badge ch-aso">ASO</span></td>
+        <td>Ср–Чт 29–30</td>
+        <td><span class="priority-badge p-must">MUST</span></td>
+        <td>Обновить Subtitle: добавить «Daily Dhikr & Wudu Guide». Обновить Keywords field: qibla compass, daily prayer reminder, quran memorization, islamic calendar 2026, apple watch prayer. Описание — добавить Academy + Apple Watch widget.</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td><strong>TikTok Видео #3: Обзор функции Academy</strong></td>
+        <td><span class="channel-badge ch-tiktok">TikTok</span></td>
+        <td>Пт 31 марта</td>
+        <td><span class="priority-badge p-high">HIGH</span></td>
+        <td>Хук: «В этом приложении есть 30-дневный курс на каждый Рамадан. И он работает весь год.» → Показ Academy. Мягкий, вдохновляющий тон.</td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td><strong>Instagram @sajda.app: Reels — 30-сек тур приложения</strong></td>
+        <td><span class="channel-badge ch-ig">Instagram</span></td>
+        <td>Пт 31 марта</td>
+        <td><span class="priority-badge p-high">HIGH</span></td>
+        <td>Быстрый screen-record тур: времена намазов → Коран → Кибла → Academy → виджет Apple Watch. Текст поверх: «Всё, что нужно мусульманину. В одном приложении.»</td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td><strong>Поиск 2 микро-инфлюенсеров</strong></td>
+        <td><span class="channel-badge ch-influencer">Influencer</span></td>
+        <td>Пн–Пт (фон)</td>
+        <td><span class="priority-badge p-high">HIGH</span></td>
+        <td>Критерии: 50K–200K подписчиков, мусульманская аудитория, СНГ или EN рынок. Тип контента: лайфстайл-ислам, молодая аудитория. Подготовить бриф для них.</td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td><strong>ASO Google Play обновление</strong></td>
+        <td><span class="channel-badge ch-aso">ASO</span></td>
+        <td>Сб–Вс 1–2 апреля</td>
+        <td><span class="priority-badge p-high">HIGH</span></td>
+        <td>Short Description (80 символов): «Prayer times, Quran & Daily Dhikr — no ads since 2012». Full Description: добавить блок про Academy, Wudu Guide, 4.9★ с 447K reviews.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Week 2 -->
+  <div class="week-header">
+    <div>
+      <h3>Неделя 2 · 3–9 апреля</h3>
+      <div class="week-theme">Тема: Усиление и UGC</div>
+    </div>
+    <div style="text-align:right; font-size:12px; opacity:0.9;">Приоритет: Инфлюенсеры + вирал + Threads</div>
+  </div>
+
+  <table class="task-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Задача</th>
+        <th>Канал</th>
+        <th>Дни</th>
+        <th>Приоритет</th>
+        <th>Описание / Контент</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>11</td>
+        <td><strong>TikTok Видео #4: «Сравнение рейтингов»</strong></td>
+        <td><span class="channel-badge ch-tiktok">TikTok</span></td>
+        <td>Пн 3 апреля</td>
+        <td><span class="priority-badge p-must">MUST</span></td>
+        <td>Хук: «Какое мусульманское приложение имеет наибольший рейтинг — 4.3, 4.7 или 4.9?» → Ответ: Sajda 4.9★ с 447K отзывами. Простая анимация сравнения. Без агрессии — факты говорят сами.</td>
+      </tr>
+      <tr>
+        <td>12</td>
+        <td><strong>Push-уведомление: Пост-Рамадан #2</strong></td>
+        <td><span class="channel-badge ch-push">Push</span></td>
+        <td>Пн 3 апреля</td>
+        <td><span class="priority-badge p-must">MUST</span></td>
+        <td>«10 дней после Рамадана. Как ваш прогресс? Откройте дашборд активности →» (Deep link на экран активности)</td>
+      </tr>
+      <tr>
+        <td>13</td>
+        <td><strong>Instagram @sajda.app: «История бренда»</strong></td>
+        <td><span class="channel-badge ch-ig">Instagram</span></td>
+        <td>Вт 4 апреля</td>
+        <td><span class="priority-badge p-must">MUST</span></td>
+        <td>Пост: «Почему Sajda не имеет рекламы с 2012 года — когда все добавляли рекламу, мы выбрали путь доверия» → История про выбор принципа над монетизацией. Искренний тон, без пафоса.</td>
+      </tr>
+      <tr>
+        <td>14</td>
+        <td><strong>Инфлюенсер-активация: отправка брифов</strong></td>
+        <td><span class="channel-badge ch-influencer">Influencer</span></td>
+        <td>Пн–Вт 3–4</td>
+        <td><span class="priority-badge p-must">MUST</span></td>
+        <td>Отправить выбранным 2 инфлюенсерам. Бриф: «Поделитесь почему Sajda ваш любимый исламский app» — органичный формат, не рекламный. Бюджет на публикацию или бартер (premium доступ).</td>
+      </tr>
+      <tr>
+        <td>15</td>
+        <td><strong>TikTok Видео #5: «День с Sajda»</strong></td>
+        <td><span class="channel-badge ch-tiktok">TikTok</span></td>
+        <td>Ср 5 апреля</td>
+        <td><span class="priority-badge p-high">HIGH</span></td>
+        <td>Лайфстайл видео: Фаджр → открыть Sajda → намаз → Коран → Зикр после Дхухра → вечерний намаз. Тихая, спокойная атмосфера. Никаких скриншотов — живое использование. Хэштеги: #islamicapp #muslimlife #prayer</td>
+      </tr>
+      <tr>
+        <td>16</td>
+        <td><strong>Instagram @sajda.app: Образовательная карусель</strong></td>
+        <td><span class="channel-badge ch-ig">Instagram</span></td>
+        <td>Чт 6 апреля</td>
+        <td><span class="priority-badge p-high">HIGH</span></td>
+        <td>«Почему время намаза разное в разных городах?» — образовательный пост с объяснением геолокации и методов расчёта. Позиционирует Sajda как точный и образованный источник.</td>
+      </tr>
+      <tr>
+        <td>17</td>
+        <td><strong>Threads: запуск аккаунта</strong></td>
+        <td><span class="channel-badge ch-threads">Threads</span></td>
+        <td>Чт 6 апреля</td>
+        <td><span class="priority-badge p-high">HIGH</span></td>
+        <td>Первый пост: «Рамадан закончился — а вы продолжаете практику или сбились? 🌙» — дискуссионный вопрос. Threads хорошо работает с текстом + вовлечение через ответы.</td>
+      </tr>
+      <tr>
+        <td>18</td>
+        <td><strong>TikTok Видео #6: Исламский лайфхак / знание</strong></td>
+        <td><span class="channel-badge ch-tiktok">TikTok</span></td>
+        <td>Пт 7 апреля</td>
+        <td><span class="priority-badge p-high">HIGH</span></td>
+        <td>Образовательный формат: аят из Корана + краткое объяснение. Аудио: тихое чтение. Текст поверх. Хук: «Этот аят из Корана изменит как вы думаете о…» — виральный формат исламского TikTok.</td>
+      </tr>
+      <tr>
+        <td>19</td>
+        <td><strong>Instagram: UGC репост + вовлечение</strong></td>
+        <td><span class="channel-badge ch-ig">Instagram</span></td>
+        <td>Сб 8 апреля</td>
+        <td><span class="priority-badge p-nice">NICE</span></td>
+        <td>Репост лучших отзывов/упоминаний Sajda за неделю. Ответить на все комментарии. Запустить вопрос в Stories: «Какая функция Sajda вам нужна дальше?»</td>
+      </tr>
+      <tr>
+        <td>20</td>
+        <td><strong>Обновление скриншотов в App Store</strong></td>
+        <td><span class="channel-badge ch-aso">ASO</span></td>
+        <td>Сб–Вс 8–9</td>
+        <td><span class="priority-badge p-must">MUST</span></td>
+        <td>Обновить минимум 3 скриншота: 1) Wudu Guide, 2) Apple Watch виджет, 3) Academy 30-day program. Каждый скриншот с коротким claim: «Наконец, приложение без рекламы 🌙»</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ─── SECTION 7: Content Ideas ─── -->
+<div class="section">
+  <div class="section-title"><span class="num">7</span> Топ идеи для вирального TikTok-контента Sajda</div>
+  <p style="margin-bottom:16px; font-size:12px; color:var(--neutral);">Форматы, которые работают в нише исламского контента на TikTok в 2026</p>
+
+  <div class="content-grid">
+    <div class="content-card">
+      <div class="channel-badge ch-tiktok">TikTok</div>
+      <div class="hook">"Самое чистое мусульманское приложение — тест на наличие рекламы"</div>
+      <div class="format">Формат: экранная запись 4 приложений по очереди, последнее — Sajda без единой рекламы</div>
+      <div class="why">🔥 Почему сработает: триггер контраста, люди ненавидят рекламу в религиозных приложениях</div>
+    </div>
+    <div class="content-card">
+      <div class="channel-badge ch-tiktok">TikTok</div>
+      <div class="hook">"POV: Фаджр в 5 утра, и ты не пропустил ни одного за 30 дней"</div>
+      <div class="format">Формат: эмоциональный POV-контент, статистика из приложения, тихая атмосфера</div>
+      <div class="why">💧 Почему сработает: эмоциональный хук, показывает дашборд активности Sajda</div>
+    </div>
+    <div class="content-card">
+      <div class="channel-badge ch-tiktok">TikTok</div>
+      <div class="hook">"447 000 людей поставили 5 звёзд — посмотрим почему"</div>
+      <div class="format">Формат: чтение реальных отзывов из App Store с реакцией</div>
+      <div class="why">⭐ Почему сработает: социальное доказательство, реальные слова пользователей</div>
+    </div>
+    <div class="content-card">
+      <div class="channel-badge ch-ig">Instagram</div>
+      <div class="hook">Карусель: «7 признаков того, что вы нашли своё духовное приложение»</div>
+      <div class="format">Формат: 7 слайдов, последний — «Sajda даёт всё это». Save-bait.</div>
+      <div class="why">💾 Почему сработает: save + share формат, релевантно после Рамадана</div>
+    </div>
+    <div class="content-card">
+      <div class="channel-badge ch-tiktok">TikTok</div>
+      <div class="hook">"Я удалил Muslim Pro. Вот что произошло"</div>
+      <div class="format">Формат: личная история-переход, без агрессии. Акцент на чистоту и покой после удаления</div>
+      <div class="why">🔄 Почему сработает: поисковый трафик по конкурентному запросу, конверсия пользователей</div>
+    </div>
+    <div class="content-card">
+      <div class="channel-badge ch-threads">Threads</div>
+      <div class="hook">"Какую суру вы читаете чаще всего в Коране — и почему?"</div>
+      <div class="format">Формат: открытый вопрос, дискуссия в комментариях</div>
+      <div class="why">💬 Почему сработает: Threads = диалог. Мусульмане любят делиться духовным</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SECTION 8: KPIs ─── -->
+<div class="section">
+  <div class="section-title"><span class="num">8</span> KPI спринта — что измеряем к 9 апреля</div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon">📱</div>
+      <div class="kpi-target">1 аккаунт</div>
+      <div class="kpi-label">TikTok запущен</div>
+      <div class="kpi-baseline">Было: 0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">🎬</div>
+      <div class="kpi-target">6 видео</div>
+      <div class="kpi-label">Опубликовано в TikTok</div>
+      <div class="kpi-baseline">Минимум 3 за неделю 1</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">👥</div>
+      <div class="kpi-target">500+</div>
+      <div class="kpi-label">Подписчики TikTok к концу спринта</div>
+      <div class="kpi-baseline">Было: 0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">📸</div>
+      <div class="kpi-target">9 постов</div>
+      <div class="kpi-label">@sajda.app (Instagram EN)</div>
+      <div class="kpi-baseline">Было: 53 постов всего</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-target">+1,000</div>
+      <div class="kpi-label">Новые фолловеры @sajda.app</div>
+      <div class="kpi-baseline">Было: 13K</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">🔍</div>
+      <div class="kpi-target">2 стора</div>
+      <div class="kpi-label">ASO обновлён (iOS + Android)</div>
+      <div class="kpi-baseline">Subtitle + Keywords + Screenshots</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">🔔</div>
+      <div class="kpi-target">2 push</div>
+      <div class="kpi-label">Пост-Рамадан уведомления</div>
+      <div class="kpi-baseline">День 1 + День 10</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">🤝</div>
+      <div class="kpi-target">2 инфлюенсера</div>
+      <div class="kpi-label">Briefs отправлены</div>
+      <div class="kpi-baseline">Активация к концу спринта</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">🧵</div>
+      <div class="kpi-target">Threads</div>
+      <div class="kpi-label">Аккаунт создан, 1+ пост</div>
+      <div class="kpi-baseline">Было: 0</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── SECTION 9: Next Sprint Preview ─── -->
+<div class="section">
+  <div class="section-title"><span class="num">9</span> Что дальше — следующий спринт (апрель 2)</div>
+  <p style="margin-bottom:12px;">После завершения этого спринта рекомендуем сфокусироваться на:</p>
+  <ul style="padding-left:20px; color:#334155; font-size:13px; line-height:2;">
+    <li>Оценка результатов TikTok — удвоить бюджет на форматы с наибольшим просмотром</li>
+    <li>Инфлюенсер-публикации — замерить прирост установок</li>
+    <li>ASO A/B тест — иконка приложения (A/B тест в Google Play Console)</li>
+    <li>Запуск таргетированной рекламы в Instagram на EN-аудиторию (METAP, UK, US)</li>
+    <li>Видео-стратегия для YouTube Shorts (кросс-постинг TikTok)</li>
+    <li>Email/push-кампания: «30 дней после Рамадана — отчёт вашей активности»</li>
+  </ul>
+
+  <div class="callout" style="margin-top:16px;">
+    <strong>Главная ставка этого спринта:</strong> Каждый день без TikTok-аккаунта — это упущенные органические установки. Muslim Pro уже там с полумиллионом подписчиков. Мы начинаем сейчас — алгоритм даёт бонус новым аккаунтам. Это лучший момент для старта.
+  </div>
+</div>
+
+<!-- footer -->
+<div style="text-align:center; padding:24px 0; color:#94a3b8; font-size:11px;">
+  Sajda App Marketing Report · Sprint Q1-2026 · Составлено 26 марта 2026<br>
+  Данные: App Store · Google Play · Instagram · TikTok · Apptweak · собственный анализ<br>
+  GOOD/APP — Конфиденциально
+</div>
+
+</div><!-- /container -->
+</body>
+</html>
