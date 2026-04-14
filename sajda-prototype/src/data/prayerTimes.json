@@ -1,0 +1,14 @@
+{
+  "city": "Алматы",
+  "date": "2026-04-15",
+  "prayers": [
+    { "key": "fajr", "name": "Фаджр", "time": "03:47", "sound": false },
+    { "key": "sunrise", "name": "Восход", "time": "05:08", "sound": false },
+    { "key": "dhuhr", "name": "Зухр", "time": "11:55", "sound": true },
+    { "key": "asr", "name": "Аср", "time": "16:39", "sound": true },
+    { "key": "maghrib", "name": "Магриб", "time": "18:38", "sound": true },
+    { "key": "isha", "name": "Иша", "time": "19:59", "sound": true, "active": true },
+    { "key": "tahajjud", "name": "Тахаджуд", "time": "00:43", "sound": true }
+  ],
+  "next": { "key": "fajr", "name": "Фаджр", "iso": "2026-04-16T03:47:00" }
+}
