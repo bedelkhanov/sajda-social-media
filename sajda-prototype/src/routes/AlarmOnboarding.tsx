@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Check, ChevronRight, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-type Step = 'intro' | 'permission' | 'time' | 'sound' | 'task' | 'done'
+type Step = 'intro1' | 'intro2' | 'permission' | 'time' | 'sound' | 'task' | 'done'
 
 interface Props {
   prayerName: string
@@ -13,27 +13,28 @@ interface Props {
 }
 
 export default function AlarmOnboarding({ prayerName, timeRange, onClose, onComplete, onPaywall }: Props) {
-  const [step, setStep] = useState<Step>('intro')
+  const [step, setStep] = useState<Step>('intro1')
   const [permAsked, setPermAsked] = useState(false)
 
   const order: Step[] = ['time', 'sound', 'task']
   const progressIdx = order.indexOf(step)
   const progress = progressIdx >= 0 ? (progressIdx + 1) / order.length : 0
+  const isIntro = step === 'intro1' || step === 'intro2'
 
   return (
     <div className="w-full h-full bg-neutral-950 text-white flex flex-col">
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 h-12 shrink-0">
-        {step !== 'intro' && step !== 'permission' ? (
+        {!isIntro && step !== 'permission' ? (
           <button onClick={() => {
             const i = order.indexOf(step)
             if (i > 0) setStep(order[i - 1])
-            else setStep('intro')
+            else setStep('intro2')
           }} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
             <ArrowLeft size={16} />
           </button>
         ) : <div className="w-9 h-9" />}
-        <h2 className="text-[15px] font-semibold">{step === 'intro' ? 'Будильник' : 'Настроить будильник'}</h2>
+        <h2 className="text-[15px] font-semibold">{isIntro ? 'Будильник' : 'Настроить будильник'}</h2>
         <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
           <X size={16} />
         </button>
@@ -48,11 +49,48 @@ export default function AlarmOnboarding({ prayerName, timeRange, onClose, onComp
       )}
 
       <AnimatePresence mode="wait">
-        {step === 'intro' && (
-          <motion.div key="intro" {...fade} className="flex-1 flex flex-col items-center justify-between pb-8">
+        {step === 'intro1' && (
+          <motion.div key="intro1" {...fade} className="flex-1 flex flex-col">
+            <div className="relative h-[46%] overflow-hidden">
+              <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 85% 120% at 50% 130%, #ffe5a8 0%, #ffb29d 18%, #ff8fc2 35%, #b37fdb 60%, #2d1d5f 85%, #0f0a2a 100%)' }} />
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 390 360" preserveAspectRatio="none">
+                <path d="M 10 340 Q 195 20 380 340" stroke="rgba(255,255,255,0.45)" strokeWidth="2" fill="none" />
+              </svg>
+              <div className="absolute top-10 left-5 text-white font-bold tracking-widest text-sm">FAJR <span className="opacity-80">☾</span></div>
+              <div className="absolute bottom-8 left-5 text-white font-bold tracking-widest text-sm">SUNRISE <span className="opacity-80">○</span></div>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="mb-1 opacity-90">⏰</div>
+                <div className="text-[68px] font-bold tabular-nums drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">03:52</div>
+              </div>
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-between px-6 pt-6 pb-6">
+              <div className="text-center">
+                <h1 className="text-[26px] font-bold leading-tight">
+                  Будильник, синхронизированный со временем {prayerName}
+                </h1>
+                <p className="mt-4 text-white/70 text-[15px] leading-snug">
+                  Будильник Sajda автоматически подстраивается под изменение времени намаза, помогая вам просыпаться точно вовремя.
+                </p>
+                <div className="flex gap-1.5 mt-6 justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
+                </div>
+              </div>
+              <button
+                onClick={() => setStep('intro2')}
+                className="w-full h-14 rounded-full bg-white/10 text-white font-semibold"
+              >
+                Следующий
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {step === 'intro2' && (
+          <motion.div key="intro2" {...fade} className="flex-1 flex flex-col items-center justify-between pb-8 px-5">
             <div className="flex-1 flex flex-col items-center justify-center">
               <RotateRings />
-              <p className="mt-8 text-center text-white/80 px-10 text-[17px] leading-snug">
+              <p className="mt-8 text-center text-white/80 px-8 text-[17px] leading-snug">
                 Продолжайте вращать телефон, чтобы остановить будильник
               </p>
               <div className="flex gap-1.5 mt-8">
@@ -62,7 +100,7 @@ export default function AlarmOnboarding({ prayerName, timeRange, onClose, onComp
             </div>
             <button
               onClick={() => setStep('permission')}
-              className="w-[calc(100%-40px)] h-14 rounded-full bg-accent-green text-white font-semibold"
+              className="w-full h-14 rounded-full bg-accent-green text-white font-semibold"
             >
               Настроить будильник
             </button>
@@ -87,7 +125,7 @@ export default function AlarmOnboarding({ prayerName, timeRange, onClose, onComp
                 </p>
                 <div className="flex gap-2 mt-4">
                   <button
-                    onClick={() => { setPermAsked(true); setStep('intro') }}
+                    onClick={() => { setPermAsked(true); setStep('intro2') }}
                     className="flex-1 h-11 rounded-full bg-white/10 text-white font-medium text-sm"
                   >
                     Не разрешать
