@@ -14,6 +14,8 @@ import Names99 from './routes/Names99'
 import Calendar from './routes/Calendar'
 import Profile from './routes/Profile'
 import Location from './routes/Location'
+import PrayerSettings from './routes/PrayerSettings'
+import Paywall from './routes/Paywall'
 
 export default function App() {
   const loc = useLocation()
@@ -43,6 +45,8 @@ export default function App() {
             <Route path="/dhikr" element={<PlaceholderPage title="Зикр" />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/location" element={<Location />} />
+            <Route path="/prayer/:key" element={<PrayerSettings />} />
+            <Route path="/paywall" element={<Paywall />} />
             <Route path="*" element={<PlaceholderPage title="Not found" />} />
           </Routes>
         </motion.div>
